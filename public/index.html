@@ -437,6 +437,34 @@
 }
 
 /* ══════════════════════════════════════════════════
+   FINANCEIRO — cards de previsão (fundo preto)
+   ══════════════════════════════════════════════════ */
+:root[data-theme="light"] .prev-card {
+  background:#101828!important;
+  border:1px solid #1d2939!important;
+  box-shadow:0 4px 16px rgba(0,0,0,.25)!important;
+}
+:root[data-theme="light"] .prev-lbl {
+  color:#9ca3af!important;
+  font-size:11px!important;
+  font-weight:700!important;
+  text-transform:uppercase!important;
+  letter-spacing:.08em!important;
+}
+:root[data-theme="light"] .prev-val {
+  font-size:38px!important;
+  font-weight:900!important;
+  line-height:1.1!important;
+  color:#ffffff!important;
+}
+:root[data-theme="light"] .prev-sub {
+  color:#6b7280!important;
+  font-size:12px!important;
+  font-weight:700!important;
+  margin-top:6px!important;
+}
+
+/* ══════════════════════════════════════════════════
    FINANCEIRO — cards de meses + linhas de pagamento
    ══════════════════════════════════════════════════ */
 :root[data-theme="light"] .fin-month-card,
@@ -479,14 +507,43 @@
 }
 
 /* ══════════════════════════════════════════════════
-   BOTÕES DE AÇÃO NOS CARDS
+   BOTÕES DE AÇÃO NOS CARDS — PRETO SÓLIDO
    ══════════════════════════════════════════════════ */
-:root[data-theme="light"] .scard-actions button,
-:root[data-theme="light"] .scard-actions .btn,
-:root[data-theme="light"] .scard-actions a {
+:root[data-theme="light"] .scard-actions .btn-secondary {
+  background:#101828!important;
+  color:#ffffff!important;
+  border:1.5px solid #101828!important;
   font-size:12px!important;
   font-weight:700!important;
-  border-width:1.5px!important;
+}
+:root[data-theme="light"] .scard-actions .btn-secondary:hover {
+  background:#1d2939!important;
+  border-color:#1d2939!important;
+  color:#fff!important;
+}
+/* Botão Editar — azul forte */
+:root[data-theme="light"] .scard-actions .btn-secondary[onclick*="edit"],
+:root[data-theme="light"] .scard-actions .btn-secondary[title*="ditar"] {
+  background:#1570ef!important;
+  border-color:#1570ef!important;
+  color:#fff!important;
+}
+:root[data-theme="light"] .scard-actions .btn-secondary[onclick*="edit"]:hover,
+:root[data-theme="light"] .scard-actions .btn-secondary[title*="ditar"]:hover {
+  background:#0e5fd8!important;
+}
+/* Botão Treino — verde escuro */
+:root[data-theme="light"] .scard-actions .btn-secondary[onclick*="treino"],
+:root[data-theme="light"] .scard-actions .btn-secondary[title*="reino"] {
+  background:#027a48!important;
+  border-color:#027a48!important;
+  color:#fff!important;
+}
+/* Botão Pago — mantém preto com check verde */
+:root[data-theme="light"] .scard-actions button,
+:root[data-theme="light"] .scard-actions .btn {
+  font-size:12px!important;
+  font-weight:700!important;
 }
 
 /* ══════════════════════════════════════════════════
@@ -10454,10 +10511,10 @@ function renderPrevisao() {
   // KPI cards
   var pc = document.getElementById('prev-cards');
   if (pc) pc.innerHTML = [
-    '<div class="prev-card ac"><div class="prev-lbl">💰 Faturamento Este Mês</div><div class="prev-val">'+fmtMoney(fatAtual)+'</div><div class="prev-sub">'+pagos.length+' alunos pagos/vencendo</div></div>',
-    '<div class="prev-card"><div class="prev-lbl">📈 Previsão Mês Completo</div><div class="prev-val" style="color:var(--blue2)">'+fmtMoney(fatPrevisto)+'</div><div class="prev-sub">Com base nos '+ativos.length+' alunos ativos</div></div>',
-    '<div class="prev-card red"><div class="prev-lbl">⚠️ Em Risco de Perda</div><div class="prev-val" style="color:var(--red)">'+fmtMoney(riscoPerda)+'</div><div class="prev-sub">'+( inativos.length+atrasados.length)+' alunos inativos/atrasados</div></div>',
-    '<div class="prev-card green"><div class="prev-lbl">🎯 Potencial Máximo</div><div class="prev-val" style="color:var(--green)">'+fmtMoney(fatIdeal)+'</div><div class="prev-sub">Se todos estivessem ativos e pagos</div></div>'
+    '<div class="prev-card ac" style="background:#101828;border-color:#1d2939;"><div class="prev-lbl" style="color:#9ca3af;">💰 FATURAMENTO ESTE MÊS</div><div class="prev-val" style="color:#ffffff;font-size:40px;">'+fmtMoney(fatAtual)+'</div><div class="prev-sub" style="color:#6b7280;font-weight:700;">'+pagos.length+' alunos pagos/vencendo</div></div>',
+    '<div class="prev-card" style="background:#101828;border-color:#1d2939;"><div class="prev-lbl" style="color:#9ca3af;">📈 PREVISÃO MÊS COMPLETO</div><div class="prev-val" style="color:#2e90fa;font-size:40px;">'+fmtMoney(fatPrevisto)+'</div><div class="prev-sub" style="color:#6b7280;font-weight:700;">Com base nos '+ativos.length+' alunos ativos</div></div>',
+    '<div class="prev-card red" style="background:#101828;border-color:#1d2939;"><div class="prev-lbl" style="color:#9ca3af;">⚠️ EM RISCO DE PERDA</div><div class="prev-val" style="color:#f97066;font-size:40px;">'+fmtMoney(riscoPerda)+'</div><div class="prev-sub" style="color:#6b7280;font-weight:700;">'+( inativos.length+atrasados.length)+' alunos inativos/atrasados</div></div>',
+    '<div class="prev-card green" style="background:#101828;border-color:#1d2939;"><div class="prev-lbl" style="color:#9ca3af;">🎯 POTENCIAL MÁXIMO</div><div class="prev-val" style="color:#3ccb7f;font-size:40px;">'+fmtMoney(fatIdeal)+'</div><div class="prev-sub" style="color:#6b7280;font-weight:700;">Se todos estivessem ativos e pagos</div></div>'
   ].join('');
 
   // Risco garantido
@@ -13687,7 +13744,7 @@ function dietFilterStudents() {
         +'<div class="diet-student-name">'+s.nome+'</div>'
         +'<div class="diet-student-meta">'+(s.objetivo||s.plano||'—')+'</div>'
       +'</div>'
-      +(hasDiet ? '<span style="font-size:9px;background:rgba(34,197,94,.15);color:#4ade80;border-radius:4px;padding:2px 5px;font-weight:800;flex-shrink:0;">PDF✓</span>' : '');
+      +(hasDiet ? '<span style="font-size:10px;background:#027a48;color:#ffffff;border-radius:4px;padding:3px 7px;font-weight:900;flex-shrink:0;letter-spacing:.03em;">PDF✓</span>' : '');
     // Pass student ID to avoid closure issue
     (function(student){ item.onclick = function(){ dietSelectStudent(student); }; })(s);
     el.appendChild(item);
@@ -14924,7 +14981,7 @@ function postFilterStudents() {
         +'<div class="post-sname">'+s.nome+'</div>'
         +'<div class="post-smeta">'+(s.objetivo||s.plano||'—')+'</div>'
       +'</div>'
-      +(hasPDF?'<span style="font-size:9px;background:rgba(168,85,247,.15);color:#c084fc;border-radius:4px;padding:2px 5px;font-weight:800;flex-shrink:0;">PDF✓</span>':'');
+      +(hasPDF?'<span style="font-size:10px;background:#027a48;color:#ffffff;border-radius:4px;padding:3px 7px;font-weight:900;flex-shrink:0;letter-spacing:.03em;">PDF✓</span>':'');
     (function(student){ item.onclick = function(){ postSelectStudent(student); }; })(s);
     el.appendChild(item);
   });
