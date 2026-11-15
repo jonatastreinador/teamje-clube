@@ -292,6 +292,222 @@
 /* ── BODY BASE em light ── */
 :root[data-theme="light"] body { background:#f0f2f5; color:#101828; }
 
+/* ══════════════════════════════════════════════════
+   CARDS DE ALUNOS (.scard) — alto contraste
+   ══════════════════════════════════════════════════ */
+:root[data-theme="light"] .scard {
+  background:#ffffff;
+  border:1px solid #d0d5dd;
+  box-shadow:0 2px 8px rgba(16,24,40,.07);
+}
+:root[data-theme="light"] .scard:hover {
+  border-color:#1570ef;
+  box-shadow:0 4px 16px rgba(21,112,239,.12);
+  transform:translateY(-2px);
+}
+/* Avatar do aluno — mantém cor, aumenta */
+:root[data-theme="light"] .scard-av {
+  width:44px; height:44px; font-size:16px; font-weight:800;
+}
+/* Nome do aluno — grande e preto */
+:root[data-theme="light"] .scard-name {
+  font-size:15px!important;
+  font-weight:800!important;
+  color:#101828!important;
+  line-height:1.3;
+}
+/* Objetivo */
+:root[data-theme="light"] .scard-goal {
+  font-size:12px!important;
+  color:#475467!important;
+  font-weight:500!important;
+}
+/* Valor do campo (Trimestral, 37, 98.2kg, 30.3) */
+:root[data-theme="light"] .scard-field strong {
+  font-size:16px!important;
+  font-weight:800!important;
+  color:#101828!important;
+  line-height:1.2;
+}
+/* Label do campo (Plano, Idade, Peso, IMC) */
+:root[data-theme="light"] .scard-field span {
+  font-size:10px!important;
+  font-weight:700!important;
+  color:#667085!important;
+  text-transform:uppercase;
+  letter-spacing:.07em;
+}
+/* Grid dos campos — fundo suave pra separar */
+:root[data-theme="light"] .scard-info {
+  background:#f7f8fa;
+  border-radius:8px;
+  padding:10px;
+  gap:10px;
+  border:1px solid #e4e7ec;
+}
+/* Divisor de ações */
+:root[data-theme="light"] .scard-actions {
+  border-top:1px solid #e4e7ec;
+}
+/* Barra de engajamento */
+:root[data-theme="light"] .eng-score-track { background:#e4e7ec; }
+
+/* ── BADGES DE STATUS — sólidos em luz ── */
+:root[data-theme="light"] .st-ativo {
+  background:#ecfdf3; color:#027a48;
+  border:1.5px solid #abefc6;
+  font-weight:800; font-size:11px;
+}
+:root[data-theme="light"] .st-inativo {
+  background:#fff1f3; color:#c01048;
+  border:1.5px solid #fda29b;
+  font-weight:800; font-size:11px;
+}
+:root[data-theme="light"] .st-risco {
+  background:#fffaeb; color:#b54708;
+  border:1.5px solid #fec84b;
+  font-weight:800; font-size:11px;
+}
+
+/* ── BADGES ENGAJAMENTO / PONTUAÇÃO ── */
+:root[data-theme="light"] .eng-badge,
+:root[data-theme="light"] .pbadge,
+:root[data-theme="light"] .score-badge,
+:root[data-theme="light"] .pay-badge {
+  font-size:11px!important;
+  font-weight:800!important;
+}
+:root[data-theme="light"] .eng-engajado,
+:root[data-theme="light"] .pb-ok,
+:root[data-theme="light"] .pay-pago,
+:root[data-theme="light"] .score-excelente {
+  background:#ecfdf3!important; color:#027a48!important; border-color:#abefc6!important;
+}
+:root[data-theme="light"] .eng-risco,
+:root[data-theme="light"] .pb-warn,
+:root[data-theme="light"] .pay-vence,
+:root[data-theme="light"] .score-risco {
+  background:#fffaeb!important; color:#b54708!important; border-color:#fec84b!important;
+}
+:root[data-theme="light"] .eng-inativo,
+:root[data-theme="light"] .pb-late,
+:root[data-theme="light"] .pay-atrasado,
+:root[data-theme="light"] .score-critico {
+  background:#fff1f3!important; color:#c01048!important; border-color:#fda29b!important;
+}
+:root[data-theme="light"] .score-bom {
+  background:#eff8ff!important; color:#1570ef!important; border-color:#b2ddff!important;
+}
+:root[data-theme="light"] .pb-none {
+  background:#f4f5f7!important; color:#344054!important; border-color:#d0d5dd!important;
+}
+
+/* ── BOTÃO WHATSAPP ── */
+:root[data-theme="light"] .wpp-btn {
+  background:#ecfdf5; border-color:#6ce9a6; color:#027a48;
+  font-weight:800; font-size:12px;
+}
+:root[data-theme="light"] .wpp-btn:hover { background:#d1fadf; border-color:#3DD68C; }
+
+/* ══════════════════════════════════════════════════
+   PERFIL DO ALUNO — legibilidade reforçada
+   ══════════════════════════════════════════════════ */
+:root[data-theme="light"] .profile-sidebar {
+  background:#ffffff;
+  border:1px solid #d0d5dd;
+  border-radius:12px;
+  padding:16px;
+  box-shadow:0 2px 8px rgba(16,24,40,.07);
+}
+/* Campos de dados do perfil */
+:root[data-theme="light"] .data-fields .field-val,
+:root[data-theme="light"] [id*="p-data"] strong,
+:root[data-theme="light"] [id*="p-data"] b {
+  font-weight:800!important;
+  color:#101828!important;
+  font-size:14px!important;
+}
+:root[data-theme="light"] [id*="p-data"] .field-label,
+:root[data-theme="light"] [id*="p-data"] small {
+  font-size:11px!important;
+  font-weight:700!important;
+  color:#667085!important;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+}
+
+/* ══════════════════════════════════════════════════
+   FINANCEIRO — cards de meses + linhas de pagamento
+   ══════════════════════════════════════════════════ */
+:root[data-theme="light"] .fin-month-card,
+:root[data-theme="light"] [class*="month-card"],
+:root[data-theme="light"] .mes-card {
+  background:#ffffff!important;
+  border:1px solid #d0d5dd!important;
+  box-shadow:0 1px 4px rgba(16,24,40,.06)!important;
+}
+/* Cabeçalho do mês — nome em negrito */
+:root[data-theme="light"] .fin-month-card > div:first-child,
+:root[data-theme="light"] [class*="month-title"],
+:root[data-theme="light"] .mes-titulo {
+  font-size:13px!important;
+  font-weight:800!important;
+  color:#101828!important;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+}
+/* Total do mês — valor em destaque */
+:root[data-theme="light"] .fin-month-total,
+:root[data-theme="light"] [class*="month-total"],
+:root[data-theme="light"] .mes-total {
+  font-size:16px!important;
+  font-weight:900!important;
+  color:#1570ef!important;
+}
+/* Linhas de pagamento */
+:root[data-theme="light"] .fin-day-row,
+:root[data-theme="light"] [class*="day-row"] {
+  color:#1d2939!important;
+  font-weight:600!important;
+  border-bottom:1px solid #f0f2f5!important;
+}
+/* Valor pago na linha */
+:root[data-theme="light"] .fin-day-val,
+:root[data-theme="light"] [class*="day-val"] {
+  color:#027a48!important;
+  font-weight:800!important;
+}
+
+/* ══════════════════════════════════════════════════
+   BOTÕES DE AÇÃO NOS CARDS
+   ══════════════════════════════════════════════════ */
+:root[data-theme="light"] .scard-actions button,
+:root[data-theme="light"] .scard-actions .btn,
+:root[data-theme="light"] .scard-actions a {
+  font-size:12px!important;
+  font-weight:700!important;
+  border-width:1.5px!important;
+}
+
+/* ══════════════════════════════════════════════════
+   TEXTO GERAL NOS CARDS — força contraste máximo
+   ══════════════════════════════════════════════════ */
+:root[data-theme="light"] .scard * { color: inherit; }
+:root[data-theme="light"] .scard p,
+:root[data-theme="light"] .scard span:not([class*="badge"]):not([class*="st-"]):not([class*="eng-"]):not([class*="pb-"]):not([class*="pay-"]):not([class*="score-"]) {
+  color:#344054;
+}
+/* Texto de rodapé do card (sem atualiz. há Xd) */
+:root[data-theme="light"] .scard-footer,
+:root[data-theme="light"] .scard [style*="opacity:.6"],
+:root[data-theme="light"] .scard [style*="opacity: .6"],
+:root[data-theme="light"] .scard [style*="opacity:.7"],
+:root[data-theme="light"] .scard [style*="font-size:10px"] {
+  color:#667085!important;
+  opacity:1!important;
+  font-weight:600!important;
+}
+
 /* Theme toggle button */
 .theme-toggle-btn {
   display:flex; align-items:center; gap:7px;
