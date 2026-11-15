@@ -6210,6 +6210,7 @@ function switchPostural(el, id) {
   document.querySelectorAll('.postal-section').forEach(function(s){ s.classList.remove('on'); });
   document.getElementById('postal-'+id).classList.add('on');
   if (id === 'postural') { postLoadStudents(); setTimeout(function(){ postInitSlots(); postUpdateCount(); }, 50); }
+}
 
 // ─── Postural checkboxes ───
 function initPosturalForm() {
