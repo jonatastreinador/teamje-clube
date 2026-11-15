@@ -547,14 +547,49 @@
 }
 
 /* ══════════════════════════════════════════════════
-   TEXTO GERAL NOS CARDS — força contraste máximo
+   SCARD-TOP — fundo preto, nome/status em branco
    ══════════════════════════════════════════════════ */
-:root[data-theme="light"] .scard * { color: inherit; }
-:root[data-theme="light"] .scard p,
-:root[data-theme="light"] .scard span:not([class*="badge"]):not([class*="st-"]):not([class*="eng-"]):not([class*="pb-"]):not([class*="pay-"]):not([class*="score-"]) {
-  color:#344054;
+:root[data-theme="light"] .scard-top {
+  background:#101828;
+  border-radius:8px;
+  padding:10px 10px 10px 10px;
+  margin:-18px -18px 14px -18px;
+  border-radius:12px 12px 0 0;
 }
-/* Texto de rodapé do card (sem atualiz. há Xd) */
+:root[data-theme="light"] .scard-name {
+  color:#ffffff!important;
+  font-size:14px!important;
+  font-weight:800!important;
+}
+:root[data-theme="light"] .scard-goal {
+  color:#9ca3af!important;
+  font-size:11px!important;
+  font-weight:600!important;
+}
+
+/* ── scard-info: fundo escuro também ── */
+:root[data-theme="light"] .scard-info {
+  background:#1d2939!important;
+  border:1px solid #2d3f55!important;
+  border-radius:8px!important;
+  padding:12px!important;
+}
+:root[data-theme="light"] .scard-field strong {
+  font-size:16px!important;
+  font-weight:900!important;
+  color:#ffffff!important;
+  display:block;
+}
+:root[data-theme="light"] .scard-field span,
+:root[data-theme="light"] .scard-field > :not(strong) {
+  font-size:10px!important;
+  font-weight:700!important;
+  color:#6b7280!important;
+  text-transform:uppercase;
+  letter-spacing:.07em;
+}
+
+/* ── Rodapé/motivo do card ── */
 :root[data-theme="light"] .scard-footer,
 :root[data-theme="light"] .scard [style*="opacity:.6"],
 :root[data-theme="light"] .scard [style*="opacity: .6"],
@@ -563,6 +598,45 @@
   color:#667085!important;
   opacity:1!important;
   font-weight:600!important;
+}
+
+/* ══════════════════════════════════════════════════
+   QA-BTNS (Treino / Pago / WPP) — fundo preto
+   ══════════════════════════════════════════════════ */
+:root[data-theme="light"] .qa-btn {
+  background:#101828!important;
+  color:#ffffff!important;
+  border:1.5px solid #1d2939!important;
+  font-weight:700!important;
+  font-size:11px!important;
+}
+:root[data-theme="light"] .qa-btn:hover {
+  background:#1d2939!important;
+  color:#fff!important;
+}
+:root[data-theme="light"] .qa-btn.qa-treino {
+  background:#1570ef!important;
+  border-color:#1570ef!important;
+  color:#fff!important;
+}
+:root[data-theme="light"] .qa-btn.qa-treino:hover {
+  background:#0e5fd8!important;
+}
+:root[data-theme="light"] .qa-btn.qa-pagar {
+  background:#027a48!important;
+  border-color:#027a48!important;
+  color:#fff!important;
+}
+:root[data-theme="light"] .qa-btn.qa-pagar:hover {
+  background:#065f46!important;
+}
+:root[data-theme="light"] .qa-btn.qa-wpp {
+  background:#027a48!important;
+  border-color:#027a48!important;
+  color:#fff!important;
+}
+:root[data-theme="light"] .qa-btn.qa-wpp:hover {
+  background:#065f46!important;
 }
 
 /* Theme toggle button */
@@ -14131,15 +14205,15 @@ function dietRenderMessages() {
       var d = document.createElement('div');
       d.style.cssText = 'align-self:stretch;margin:4px 0;';
       d.innerHTML =
-        '<div style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);border-radius:12px;padding:16px;">'
-          +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">'
-            +'<span style="font-size:18px;">📄</span>'
-            +'<span style="font-size:14px;font-weight:800;color:#4ade80;">Dieta '+m.content.numero+' — '+m.content.nome+' — '+m.content.kcal+'kcal</span>'
+        '<div style="background:#101828;border:1.5px solid #1d2939;border-radius:14px;padding:18px;box-shadow:0 4px 16px rgba(0,0,0,.2);">'
+          +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">'
+            +'<span style="font-size:20px;">📄</span>'
+            +'<span style="font-size:15px;font-weight:900;color:#3ccb7f;letter-spacing:-.01em;">Dieta '+m.content.numero+' — '+m.content.nome+' — '+m.content.kcal+'kcal</span>'
           +'</div>'
-          +'<div style="font-size:12px;color:var(--txt3);margin-bottom:12px;">✅ Dieta gerada com sucesso! Clique em "Baixar PDF" para exportar no formato TEAMJE.</div>'
+          +'<div style="font-size:13px;color:#9ca3af;font-weight:700;margin-bottom:14px;">✅ Dieta gerada com sucesso! Clique em <strong style="color:#fff;">"Baixar PDF"</strong> para exportar no formato TEAMJE.</div>'
           +'<div style="display:flex;gap:8px;flex-wrap:wrap;">'
-            +'<button class="btn btn-primary" style="font-size:12px;" onclick="dietExportPDF()">📄 Baixar PDF</button>'
-            +'<button class="btn btn-secondary" style="font-size:12px;border-color:rgba(37,211,102,.4);color:#25d366;" onclick="dietSendWhatsApp()">💬 Enviar WPP</button>'
+            +'<button class="btn btn-primary" style="font-size:13px;font-weight:800;padding:9px 18px;background:#1570ef;border-color:#1570ef;" onclick="dietExportPDF()">📄 Baixar PDF</button>'
+            +'<button class="btn btn-secondary" style="font-size:13px;font-weight:800;padding:9px 18px;background:#027a48;border-color:#027a48;color:#fff;" onclick="dietSendWhatsApp()">💬 Enviar WPP</button>'
           +'</div>'
         +'</div>';
       el.appendChild(d);
