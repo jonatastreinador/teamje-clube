@@ -46,146 +46,251 @@
 }
 
 /* ── LIGHT THEME ──────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════
+   TEMA CLARO — Dashboard empresarial de alta legibilidade
+   Sidebar: preta sólida | Conteúdo: branco + preto forte
+   ═══════════════════════════════════════════════════════ */
 :root[data-theme="light"] {
-  --bg:       #ffffff;
-  --bg2:      #f4f5f7;
-  --card:     #ffffff;
-  --card2:    #f4f5f7;
-  --border:   #d1d5db;
-  --border2:  #9ca3af;
+  --bg:        #f0f2f5;
+  --bg2:       #e4e7ec;
+  --card:      #ffffff;
+  --card2:     #f7f8fa;
+  --border:    #d0d5dd;
+  --border2:   #98a2b3;
 
-  --blue:     #1a56db;
-  --blue2:    #1d4ed8;
-  --blue3:    #2563eb;
-  --blue-sub: rgba(29,78,216,.08);
-  --blue-glow:rgba(29,78,216,.15);
+  --blue:      #1570ef;
+  --blue2:     #1570ef;
+  --blue3:     #2e90fa;
+  --blue-sub:  rgba(21,112,239,.08);
+  --blue-glow: rgba(21,112,239,.15);
 
-  --gold:     #92400e;
+  --gold:      #b54708;
 
-  --green:    #065f46;
-  --yellow:   #92400e;
-  --red:      #991b1b;
+  --green:     #027a48;
+  --yellow:    #b54708;
+  --red:       #c01048;
 
-  --txt:      #000000;
-  --txt2:     #111827;
-  --txt3:     #374151;
-  --txt4:     #6b7280;
+  --txt:       #101828;
+  --txt2:      #1d2939;
+  --txt3:      #344054;
+  --txt4:      #667085;
 }
 
-/* Login em light */
-:root[data-theme="light"] #login {
-  background:#f4f5f7;
-}
+/* ── LOGIN ── */
+:root[data-theme="light"] #login { background:#f0f2f5; }
 :root[data-theme="light"] .lcard {
-  background:#ffffff;
-  border-color:rgba(0,0,0,.12);
-  box-shadow:0 4px 24px rgba(0,0,0,.10);
+  background:#fff;
+  border-color:rgba(0,0,0,.1);
+  box-shadow:0 8px 32px rgba(0,0,0,.12);
 }
-:root[data-theme="light"] .ltitle { color:#000000; }
-:root[data-theme="light"] .lsub { color:#374151; }
+:root[data-theme="light"] .ltitle { color:#101828; }
+:root[data-theme="light"] .lsub   { color:#344054; }
 :root[data-theme="light"] .linput {
-  background:#f9fafb;
-  border-color:rgba(0,0,0,.18);
-  color:#000000;
+  background:#fff;
+  border-color:#d0d5dd;
+  color:#101828;
 }
-:root[data-theme="light"] .linput:focus { border-color:#1d4ed8; }
-:root[data-theme="light"] .linput::placeholder { color:#9ca3af; }
+:root[data-theme="light"] .linput:focus { border-color:#1570ef; box-shadow:0 0 0 3px rgba(21,112,239,.12); }
+:root[data-theme="light"] .linput::placeholder { color:#98a2b3; }
 
-/* Sidebar em light — azul escuro sólido */
+/* ── SIDEBAR — PRETA SÓLIDA ── */
 :root[data-theme="light"] .sb {
-  background:#0f2560;
-  border-color:rgba(255,255,255,.08);
+  background:#0a0a0a;
+  border-right:1px solid #1a1a1a;
 }
-:root[data-theme="light"] .sb-logo { border-color:rgba(255,255,255,.12); }
-:root[data-theme="light"] .nl { color:rgba(255,255,255,.4); }
-:root[data-theme="light"] .ni { color:rgba(255,255,255,.8); }
-:root[data-theme="light"] .ni:hover,
-:root[data-theme="light"] .ni.on { background:rgba(255,255,255,.14); color:#fff; }
-:root[data-theme="light"] .nb { color:rgba(255,255,255,.45)!important; }
-:root[data-theme="light"] .nbadge { color:rgba(255,255,255,.5)!important; }
-:root[data-theme="light"] .sb-foot { border-color:rgba(255,255,255,.12); }
-:root[data-theme="light"] .uname,
-:root[data-theme="light"] .urole,
-:root[data-theme="light"] .uav { color:#fff!important; }
-
-/* Cards em light — fundo branco, borda visível */
-:root[data-theme="light"] .card,
-:root[data-theme="light"] [class*="card"],
-:root[data-theme="light"] .metric-card {
-  background:#ffffff;
-  border:1px solid #d1d5db;
-  box-shadow:0 1px 3px rgba(0,0,0,.08);
+:root[data-theme="light"] .sb-logo {
+  border-bottom:1px solid #2a2a2a;
 }
+:root[data-theme="light"] .nl {
+  color:#4d4d4d;
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+:root[data-theme="light"] .ni {
+  color:#b0b0b0;
+  font-weight:500;
+  font-size:13.5px;
+}
+:root[data-theme="light"] .ni:hover {
+  background:#1a1a1a;
+  color:#ffffff;
+}
+:root[data-theme="light"] .ni.on {
+  background:#1570ef;
+  color:#ffffff;
+  font-weight:600;
+}
+:root[data-theme="light"] .ni.on svg,
+:root[data-theme="light"] .ni:hover svg { color:#fff; }
+:root[data-theme="light"] .nb  { color:#5a5a5a!important; }
+:root[data-theme="light"] .nbadge {
+  background:#1570ef!important;
+  color:#fff!important;
+  font-weight:700;
+}
+:root[data-theme="light"] .sb-foot { border-top:1px solid #2a2a2a; }
+:root[data-theme="light"] .uname { color:#ffffff!important; font-weight:600; }
+:root[data-theme="light"] .urole { color:#888!important; }
+:root[data-theme="light"] .uav   { background:#1570ef!important; color:#fff!important; }
 
-/* Textos de métricas — preto forte */
-:root[data-theme="light"] .metric-value,
-:root[data-theme="light"] .stat-num,
-:root[data-theme="light"] .big-num,
-:root[data-theme="light"] h1,
-:root[data-theme="light"] h2,
-:root[data-theme="light"] h3 { color:#000000!important; }
-
-/* Textos secundários */
-:root[data-theme="light"] .metric-label,
-:root[data-theme="light"] .stat-label,
-:root[data-theme="light"] .card-title,
-:root[data-theme="light"] label,
-:root[data-theme="light"] th { color:#111827!important; }
-
-/* Tabelas */
-:root[data-theme="light"] table { border-color:#d1d5db; }
-:root[data-theme="light"] th { background:#f4f5f7!important; color:#000000!important; }
-:root[data-theme="light"] td { color:#111827!important; border-color:#e5e7eb!important; }
-:root[data-theme="light"] tr:hover td { background:#f9fafb!important; }
-
-/* Topbar em light */
+/* ── TOPBAR ── */
 :root[data-theme="light"] .topbar {
   background:#ffffff;
-  border-color:#d1d5db;
-  box-shadow:0 1px 3px rgba(0,0,0,.06);
+  border-bottom:1px solid #d0d5dd;
+  box-shadow:0 1px 4px rgba(0,0,0,.06);
 }
-:root[data-theme="light"] .page-title { color:#000000!important; }
-:root[data-theme="light"] .page-sub   { color:#374151!important; }
+:root[data-theme="light"] .page-title {
+  color:#101828!important;
+  font-size:20px!important;
+  font-weight:700!important;
+  letter-spacing:-.01em;
+}
+:root[data-theme="light"] .page-sub { color:#344054!important; font-size:13px!important; }
 
-/* Inputs e selects */
+/* ── CONTEÚDO / FUNDO ── */
+:root[data-theme="light"] .main-content,
+:root[data-theme="light"] .content-area,
+:root[data-theme="light"] main { background:#f0f2f5; }
+
+/* ── CARDS ── */
+:root[data-theme="light"] .card,
+:root[data-theme="light"] [class*="card"],
+:root[data-theme="light"] .metric-card,
+:root[data-theme="light"] .kpi-card,
+:root[data-theme="light"] .stat-card {
+  background:#ffffff!important;
+  border:1px solid #e4e7ec!important;
+  box-shadow:0 1px 3px rgba(16,24,40,.06), 0 1px 2px rgba(16,24,40,.04)!important;
+}
+:root[data-theme="light"] .card:hover,
+:root[data-theme="light"] .metric-card:hover {
+  box-shadow:0 4px 12px rgba(16,24,40,.10)!important;
+}
+
+/* ── NÚMEROS GRANDES (métricas principais) ── */
+:root[data-theme="light"] .metric-value,
+:root[data-theme="light"] .stat-num,
+:root[data-theme="light"] .big-num {
+  color:#101828!important;
+  font-weight:700!important;
+}
+
+/* ── SOBRESCREVE cores inline dos números ── */
+:root[data-theme="light"] [style*="font-size:2"],
+:root[data-theme="light"] [style*="font-size: 2"],
+:root[data-theme="light"] [style*="font-size:3"],
+:root[data-theme="light"] [style*="font-size: 3"] {
+  font-weight:800!important;
+}
+
+/* Manter cores semânticas mas mais escuras / vibrantes */
+:root[data-theme="light"] [style*="color:#ef4444"],
+:root[data-theme="light"] [style*="color: #ef4444"],
+:root[data-theme="light"] [style*="color:rgb(239,68,68)"] { color:#c01048!important; }
+
+:root[data-theme="light"] [style*="color:#22c55e"],
+:root[data-theme="light"] [style*="color: #22c55e"],
+:root[data-theme="light"] [style*="color:rgb(34,197,94)"] { color:#027a48!important; }
+
+:root[data-theme="light"] [style*="color:#f59e0b"],
+:root[data-theme="light"] [style*="color: #f59e0b"],
+:root[data-theme="light"] [style*="color:rgb(245,158,11)"] { color:#b54708!important; }
+
+:root[data-theme="light"] [style*="color:#3b82f6"],
+:root[data-theme="light"] [style*="color: #3b82f6"],
+:root[data-theme="light"] [style*="color:rgb(59,130,246)"] { color:#1570ef!important; }
+
+:root[data-theme="light"] [style*="color:#a78bfa"],
+:root[data-theme="light"] [style*="color: #a78bfa"] { color:#6941c6!important; }
+
+/* ── TEXTOS GERAIS ── */
+:root[data-theme="light"] h1,
+:root[data-theme="light"] h2,
+:root[data-theme="light"] h3,
+:root[data-theme="light"] h4 {
+  color:#101828!important;
+  font-weight:700!important;
+}
+:root[data-theme="light"] p,
+:root[data-theme="light"] span:not([style*="color"]),
+:root[data-theme="light"] div:not([style*="color"]) > .label,
+:root[data-theme="light"] .txt3 { color:#344054; }
+
+/* ── LABELS DE CARD (ex: "TREINOS ATRASADOS") ── */
+:root[data-theme="light"] [style*="font-size:11px"],
+:root[data-theme="light"] [style*="font-size:10px"],
+:root[data-theme="light"] [style*="font-size:12px"] {
+  font-weight:600!important;
+  letter-spacing:.04em;
+}
+
+/* ── TABELAS ── */
+:root[data-theme="light"] table { border-collapse:collapse; border-color:#e4e7ec; }
+:root[data-theme="light"] thead tr { background:#f7f8fa!important; }
+:root[data-theme="light"] th {
+  background:#f7f8fa!important;
+  color:#344054!important;
+  font-weight:700!important;
+  font-size:12px!important;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+  border-bottom:2px solid #d0d5dd!important;
+}
+:root[data-theme="light"] td {
+  color:#1d2939!important;
+  border-color:#e4e7ec!important;
+  font-weight:500;
+}
+:root[data-theme="light"] tr:hover td { background:#f7f8fa!important; }
+
+/* ── INPUTS / SELECT / TEXTAREA ── */
 :root[data-theme="light"] input:not(.linput),
 :root[data-theme="light"] select,
 :root[data-theme="light"] textarea {
   background:#ffffff!important;
-  border-color:#d1d5db!important;
-  color:#000000!important;
+  border:1px solid #d0d5dd!important;
+  color:#101828!important;
+  font-weight:500!important;
 }
 :root[data-theme="light"] input::placeholder,
-:root[data-theme="light"] textarea::placeholder { color:#9ca3af!important; }
-
-/* Badges e status */
-:root[data-theme="light"] .badge,
-:root[data-theme="light"] [class*="badge"] { border:1px solid currentColor; }
-
-/* Avisos coloridos — fundo claro, texto escuro */
-:root[data-theme="light"] .alert-banner,
-:root[data-theme="light"] .banner,
-:root[data-theme="light"] [class*="alert"] {
-  border:1px solid #d1d5db;
+:root[data-theme="light"] textarea::placeholder { color:#98a2b3!important; }
+:root[data-theme="light"] input:focus,
+:root[data-theme="light"] select:focus,
+:root[data-theme="light"] textarea:focus {
+  border-color:#1570ef!important;
+  box-shadow:0 0 0 3px rgba(21,112,239,.1)!important;
 }
 
-/* Scrollbar discreta */
-:root[data-theme="light"] ::-webkit-scrollbar-track { background:#f4f5f7; }
-:root[data-theme="light"] ::-webkit-scrollbar-thumb { background:#9ca3af; }
+/* ── BADGES / STATUS ── */
+:root[data-theme="light"] .badge,
+:root[data-theme="light"] [class*="badge"] {
+  font-weight:700!important;
+  font-size:11px!important;
+}
 
-/* Números grandes em vermelho/verde/laranja — mais escuros pra contraste */
-:root[data-theme="light"] .txt-red,
-:root[data-theme="light"] [style*="color:#ef4444"],
-:root[data-theme="light"] [style*="color: #ef4444"] { color:#991b1b!important; }
-:root[data-theme="light"] .txt-green,
-:root[data-theme="light"] [style*="color:#22c55e"],
-:root[data-theme="light"] [style*="color: #22c55e"] { color:#065f46!important; }
-:root[data-theme="light"] .txt-yellow,
-:root[data-theme="light"] [style*="color:#f59e0b"],
-:root[data-theme="light"] [style*="color: #f59e0b"] { color:#92400e!important; }
-:root[data-theme="light"] .txt-blue,
-:root[data-theme="light"] [style*="color:#3b82f6"],
-:root[data-theme="light"] [style*="color: #3b82f6"] { color:#1a56db!important; }
+/* ── BOTÕES ── */
+:root[data-theme="light"] button:not(.theme-toggle-btn):not([style]) {
+  font-weight:600!important;
+}
+
+/* ── SCROLLBAR ── */
+:root[data-theme="light"] ::-webkit-scrollbar       { width:6px; height:6px; }
+:root[data-theme="light"] ::-webkit-scrollbar-track { background:#f0f2f5; }
+:root[data-theme="light"] ::-webkit-scrollbar-thumb { background:#c0c5ce; border-radius:3px; }
+:root[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background:#98a2b3; }
+
+/* ── SEPARADORES / SEÇÕES ── */
+:root[data-theme="light"] hr,
+:root[data-theme="light"] [class*="divider"] { border-color:#e4e7ec!important; }
+
+/* ── ALERTAS / BANNERS ── */
+:root[data-theme="light"] .alert-banner,
+:root[data-theme="light"] .banner { border:1px solid #d0d5dd; }
+
+/* ── BODY BASE em light ── */
+:root[data-theme="light"] body { background:#f0f2f5; color:#101828; }
 
 /* Theme toggle button */
 .theme-toggle-btn {
