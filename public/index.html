@@ -305,45 +305,48 @@
   box-shadow:0 4px 16px rgba(21,112,239,.12);
   transform:translateY(-2px);
 }
-/* Avatar do aluno — mantém cor, aumenta */
+/* Avatar do aluno */
 :root[data-theme="light"] .scard-av {
-  width:44px; height:44px; font-size:16px; font-weight:800;
+  width:44px!important; height:44px!important;
+  font-size:16px!important; font-weight:800!important;
+  border:2px solid rgba(255,255,255,.25)!important;
 }
-/* Nome do aluno — grande e preto */
+/* Nome do aluno — BRANCO sobre fundo escuro */
 :root[data-theme="light"] .scard-name {
-  font-size:15px!important;
-  font-weight:800!important;
-  color:#101828!important;
-  line-height:1.3;
+  font-size:16px!important;
+  font-weight:900!important;
+  color:#ffffff!important;
+  line-height:1.3!important;
 }
 /* Objetivo */
 :root[data-theme="light"] .scard-goal {
   font-size:12px!important;
-  color:#475467!important;
+  color:#9ca3af!important;
   font-weight:500!important;
 }
-/* Valor do campo (Trimestral, 37, 98.2kg, 30.3) */
+/* Valor do campo (Trimestral, 37, 98.2kg, 30.3) — BRANCO */
 :root[data-theme="light"] .scard-field strong {
   font-size:16px!important;
-  font-weight:800!important;
-  color:#101828!important;
-  line-height:1.2;
+  font-weight:900!important;
+  color:#ffffff!important;
+  display:block!important;
+  line-height:1.2!important;
 }
-/* Label do campo (Plano, Idade, Peso, IMC) */
+/* Label do campo (Plano, Idade, Peso, IMC) — cinza visível */
 :root[data-theme="light"] .scard-field span {
   font-size:10px!important;
   font-weight:700!important;
-  color:#667085!important;
-  text-transform:uppercase;
-  letter-spacing:.07em;
+  color:#9ca3af!important;
+  text-transform:uppercase!important;
+  letter-spacing:.07em!important;
 }
-/* Grid dos campos — fundo suave pra separar */
+/* Grid dos campos — FUNDO PRETO */
 :root[data-theme="light"] .scard-info {
-  background:#f7f8fa;
-  border-radius:8px;
-  padding:10px;
-  gap:10px;
-  border:1px solid #e4e7ec;
+  background:#1d2939!important;
+  border-radius:8px!important;
+  padding:12px!important;
+  gap:10px!important;
+  border:1px solid #2d3f55!important;
 }
 /* Divisor de ações */
 :root[data-theme="light"] .scard-actions {
