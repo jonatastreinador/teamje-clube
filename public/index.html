@@ -6090,21 +6090,22 @@ function renderList() {
     var scoreColor = scColor;
     var scoreRingSvg = buildScoreRing(sc.score, scColor);
 
+    var isLight = document.documentElement.getAttribute('data-theme')==='light';
     var card = document.createElement('div'); card.className='scard';
     card.innerHTML =
-      '<div class="scard-top">'
+      '<div class="scard-top" style="'+(isLight?'background:#101828;margin:-18px -18px 14px -18px;padding:14px 16px;border-radius:12px 12px 0 0;':'')+'">'
         +'<div style="display:flex;align-items:center;gap:8px;">'
           +scoreRingSvg
-          +'<div class="scard-av" style="background:'+COLORS[i%COLORS.length]+'">'+initials+'</div>'
-          +'<div><div class="scard-name">'+s.nome+'</div><div class="scard-goal">'+s.objetivo+'</div></div>'
+          +'<div class="scard-av" style="background:'+COLORS[i%COLORS.length]+(isLight?';border:2px solid rgba(255,255,255,.25)':'')+'" >'+initials+'</div>'
+          +'<div><div class="scard-name" style="'+(isLight?'color:#ffffff;font-size:16px;font-weight:900;':'')+'" >'+s.nome+'</div><div class="scard-goal" style="'+(isLight?'color:#9ca3af;':'')+'" >'+s.objetivo+'</div></div>'
         +'</div>'
         +'<span class="scard-status '+stClass+'">'+stLabel+'</span>'
       +'</div>'
-      +'<div class="scard-info">'
-        +'<div class="scard-field"><strong>'+s.plano+'</strong>Plano</div>'
-        +'<div class="scard-field"><strong>'+(s.idade||'—')+'</strong>Idade</div>'
-        +'<div class="scard-field"><strong>'+(s.peso?s.peso+'kg':'—')+'</strong>Peso</div>'
-        +'<div class="scard-field"><strong>'+imc+'</strong>IMC</div>'
+      +'<div class="scard-info" style="'+(isLight?'background:#1d2939;border:1px solid #2d3f55;border-radius:8px;padding:12px;margin-bottom:12px;':'')+'">'
+        +'<div class="scard-field"><strong style="'+(isLight?'color:#ffffff;font-size:16px;font-weight:900;display:block;':'')+'" >'+s.plano+'</strong><span style="'+(isLight?'color:#9ca3af;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;':'')+'" >Plano</span></div>'
+        +'<div class="scard-field"><strong style="'+(isLight?'color:#ffffff;font-size:16px;font-weight:900;display:block;':'')+'" >'+(s.idade||'—')+'</strong><span style="'+(isLight?'color:#9ca3af;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;':'')+'" >Idade</span></div>'
+        +'<div class="scard-field"><strong style="'+(isLight?'color:#ffffff;font-size:16px;font-weight:900;display:block;':'')+'" >'+(s.peso?s.peso+'kg':'—')+'</strong><span style="'+(isLight?'color:#9ca3af;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;':'')+'" >Peso</span></div>'
+        +'<div class="scard-field"><strong style="'+(isLight?'color:#ffffff;font-size:16px;font-weight:900;display:block;':'')+'" >'+imc+'</strong><span style="'+(isLight?'color:#9ca3af;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;':'')+'" >IMC</span></div>'
       +'</div>'
       +'<div class="scard-eng-row">'
         +'<div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:0;">'
