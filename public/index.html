@@ -3332,6 +3332,8 @@ input[type="checkbox"] {
   
   <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- OVERRIDE TEMA CLARO — carregado por último, prioridade máxima -->
+  <style id="je-theme-override"></style>
 </head>
 <body>
 
@@ -6098,22 +6100,21 @@ function renderList() {
     var scoreColor = scColor;
     var scoreRingSvg = buildScoreRing(sc.score, scColor);
 
-    var isLight = document.documentElement.getAttribute('data-theme')==='light';
     var card = document.createElement('div'); card.className='scard';
     card.innerHTML =
-      '<div class="scard-top" style="'+(isLight?'background:#101828;margin:-18px -18px 14px -18px;padding:14px 16px;border-radius:12px 12px 0 0;':'')+'">'
+      '<div class="scard-top">'
         +'<div style="display:flex;align-items:center;gap:8px;">'
           +scoreRingSvg
-          +'<div class="scard-av" style="background:'+COLORS[i%COLORS.length]+(isLight?';border:2px solid rgba(255,255,255,.25)':'')+'" >'+initials+'</div>'
-          +'<div><div class="scard-name" style="'+(isLight?'color:#ffffff;font-size:16px;font-weight:900;':'')+'" >'+s.nome+'</div><div class="scard-goal" style="'+(isLight?'color:#9ca3af;':'')+'" >'+s.objetivo+'</div></div>'
+          +'<div class="scard-av" style="background:'+COLORS[i%COLORS.length]+'">'+initials+'</div>'
+          +'<div><div class="scard-name">'+s.nome+'</div><div class="scard-goal">'+s.objetivo+'</div></div>'
         +'</div>'
         +'<span class="scard-status '+stClass+'">'+stLabel+'</span>'
       +'</div>'
-      +'<div class="scard-info" style="'+(isLight?'background:#1d2939;border:1px solid #2d3f55;border-radius:8px;padding:12px;margin-bottom:12px;':'')+'">'
-        +'<div class="scard-field"><strong style="'+(isLight?'color:#ffffff;font-size:16px;font-weight:900;display:block;':'')+'" >'+s.plano+'</strong><span style="'+(isLight?'color:#9ca3af;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;':'')+'" >Plano</span></div>'
-        +'<div class="scard-field"><strong style="'+(isLight?'color:#ffffff;font-size:16px;font-weight:900;display:block;':'')+'" >'+(s.idade||'—')+'</strong><span style="'+(isLight?'color:#9ca3af;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;':'')+'" >Idade</span></div>'
-        +'<div class="scard-field"><strong style="'+(isLight?'color:#ffffff;font-size:16px;font-weight:900;display:block;':'')+'" >'+(s.peso?s.peso+'kg':'—')+'</strong><span style="'+(isLight?'color:#9ca3af;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;':'')+'" >Peso</span></div>'
-        +'<div class="scard-field"><strong style="'+(isLight?'color:#ffffff;font-size:16px;font-weight:900;display:block;':'')+'" >'+imc+'</strong><span style="'+(isLight?'color:#9ca3af;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;':'')+'" >IMC</span></div>'
+      +'<div class="scard-info">'
+        +'<div class="scard-field"><strong>'+s.plano+'</strong><span>Plano</span></div>'
+        +'<div class="scard-field"><strong>'+(s.idade||'—')+'</strong><span>Idade</span></div>'
+        +'<div class="scard-field"><strong>'+(s.peso?s.peso+'kg':'—')+'</strong><span>Peso</span></div>'
+        +'<div class="scard-field"><strong>'+imc+'</strong><span>IMC</span></div>'
       +'</div>'
       +'<div class="scard-eng-row">'
         +'<div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:0;">'
@@ -15845,9 +15846,8 @@ function applyTheme(t) {
   }
   // Injeta estilo de alta prioridade para cards no tema claro
   var el = document.getElementById('je-theme-override');
-  if (!el) { el = document.createElement('style'); el.id='je-theme-override'; document.head.appendChild(el); }
-  if (t === 'light') {
-    el.textContent = [
+  if (el) {
+    el.textContent = (t === 'light') ? [
       '.scard-top{background:#101828!important;margin:-18px -18px 14px -18px!important;padding:14px 16px!important;border-radius:12px 12px 0 0!important;}',
       '.scard-name{color:#ffffff!important;font-size:16px!important;font-weight:900!important;}',
       '.scard-goal{color:#9ca3af!important;font-size:12px!important;}',
@@ -15855,9 +15855,7 @@ function applyTheme(t) {
       '.scard-info{background:#1d2939!important;border:1px solid #2d3f55!important;border-radius:8px!important;padding:12px!important;margin-bottom:12px!important;}',
       '.scard-field strong{color:#ffffff!important;font-size:15px!important;font-weight:900!important;display:block!important;}',
       '.scard-field span{color:#9ca3af!important;font-size:10px!important;font-weight:700!important;text-transform:uppercase!important;letter-spacing:.07em!important;}'
-    ].join('\n');
-  } else {
-    el.textContent = '';
+    ].join('\n') : '';
   }
   // Re-renderiza cards
   try { renderList(); } catch(e){}
