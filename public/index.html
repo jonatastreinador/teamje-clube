@@ -5291,11 +5291,19 @@ input[type="checkbox"] {
         <!-- Danger zone -->
         <div class="cd" style="padding:22px 24px;border-color:rgba(248,113,113,.25);">
           <div style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:8px;">⚠️ Zona de Perigo</div>
-          <div style="font-size:12px;color:var(--txt2);margin-bottom:16px;line-height:1.6;">Apaga <strong>permanentemente</strong> todos os dados salvos no navegador. Faça um backup antes.</div>
-          <button class="btn btn-danger" onclick="JE_clear()" style="background:rgba(248,113,113,.15);border:1px solid rgba(248,113,113,.4);color:var(--red);">
+          <div style="font-size:12px;color:var(--txt2);margin-bottom:12px;line-height:1.6;">Apaga <strong>permanentemente</strong> todos os dados salvos no navegador. Faça um backup antes.</div>
+          <button class="btn btn-danger" onclick="JE_clear()" style="background:rgba(248,113,113,.15);border:1px solid rgba(248,113,113,.4);color:var(--red);margin-bottom:10px;">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
             Apagar todos os dados
           </button>
+          <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px;">
+            <div style="font-size:13px;font-weight:700;color:var(--yellow);margin-bottom:6px;">🧹 Remover alunos fora da lista ativa</div>
+            <div style="font-size:12px;color:var(--txt2);margin-bottom:10px;line-height:1.6;">Remove do sistema todos os alunos cujo nome não está na lista de <strong>133 ativos</strong> carregada. Os dados dos alunos mantidos não são alterados.</div>
+            <button class="btn" onclick="if(confirm('Remover alunos que não estão na lista de 133 ativos? Esta ação não pode ser desfeita sem backup.')){purgeInactiveStudents();}" style="background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.4);color:var(--yellow);font-weight:700;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+              Remover alunos não listados
+            </button>
+          </div>
         </div>
 
       </div>
@@ -15835,7 +15843,44 @@ function applyTheme(t) {
     if (lbl) lbl.textContent = 'Tema Claro';
     if (icon) icon.innerHTML = '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
   }
+  // Re-renderiza cards para aplicar estilos inline do novo tema
+  try { renderList(); } catch(e){}
+  try { renderDashStudents(); } catch(e){}
 }
+// ─── Limpa alunos não presentes na lista de ativos ───────────────────
+function purgeInactiveStudents() {
+  var LISTA_ATIVOS = ["Alexia Kalyne neto","Aline Anjos","Alisson Maranhão da Silva","Ana Paula das Graças","Ana Cristina de Almeida do Nascimento","Ananda Souza dos Santos","Ane Teresa de Oliveira Vieira","Antonio Carlos dos Santos Feitosa","Ariane Gomes Lima","Arielly Xavier de Melo","Aryana Rocha do Nascimento","Ayla Freitas de Oliveira","Bianca Vitória","Camila Letícia de Souza Pereira","Catarina José da Silva","Claudiane Moraes","Claudilene Dos Anjos Gomes","Claudilene Teixeira da Silva","Daniele Soares Neto Freire","Darieli Ferreira dos Santos","Débora Lemos Paz","Deyse Souza Rocha","Elaine Gomes","Emerson da silva","Ewelly Tereza Silva","Fabíola Faustino da Silva","Flávia Maria Fernandes de Souza","Francileide Isabel Oliveira Lacerda","Francineide Maria da Silva Fagundes","Franqueline Ferreira da Silva","Gabriel Cintra Silva","Gabriel Evélin Anjos Alves","Gilson Antonio da Silva","Gislâne da Silva Vieira","Gislania Marques","Gleiner Rolien da Silva Pereira","Irenice silva dos santos","Isaac paulino nolasco de Almeida","Isaildes França","Jaciara Soares de França oliveira","Jackson Alexandre da Silva","Jaélison Ramos Pereira","Jakeline Mônica da Silva","Jameson Rodrigues Oliveira","Janakely dos Santos Ramos","Jennifer dos santos silva","Jônatas Emanuel","Jônatas Treinador","José caíque de Oliveira","José Edson de Oliveira Pires","José Marcelo Rodrigues Vieira","José caíque de Oliveira","José Expedito Mizael Rodrigues","José Roberto dos Santos","José Alberto viera freitas","Josefa Rogeria Vieira dos Santos","Josy Maria De Oliveira Jorge","Juliana Ferreira Barbosa","Juliano Gonzaga da silva","Kássia Lopes Pereira","Kemelly Anjos Novaes","Kenarty Dantas Dias","Kethlen Anjos Novaes","Kivia Pereira","Laiza Lins Marques","Laryssa saniele da Silva Martins","Laysa Bárbara Alves de Melo","Leandro Izidio dos Santos","Leonardo Silva de Souza","Lindineis Gomes da Silva","Lucas Cristiano","Lucimare Souza Cavalcante","Manoel Felipe macena de Souza","Mari silva","Maria Aparecida Paulino Vieira","Maria Beatriz Bezerra da Silva","Maria de fatima vieira rocha","Maria do Rosário Alves dos Santos","Maria gabriely Diares da Silva","Maria Luana Carvalho Martins","Maria lucielma Bezerra dos Santos","Maria Mercia dos Santos Oliveira","Maria Nicole da Silva Neto","Maria Teresinha Miguel de Alencar","Maria Vieira de Freitas","Maria Josélia de Albuquerque","Maria do Carmo subrinha Abreu","Maria silvia de araujo gomes","Maria Vitória da Silva","Maria cicera Gomes da Silva","Mariana Chaveiro do Nascimento","Mariely França","Mariza Mayara torres","Mayanne Martins Santana","Mayara Jorge da Silva","Maynara Paulino Vieira","Micaeli Sobral Bezerra","Monica Lourdes de Souza","Monise Gomes","Murilo vieira","Nadja Vicente de lima","Naiara Rodrigues da Silva","Odiclecia Vieira","Raícila faustino dos Santos","Ramon Lacerda Alves","Ramy Bispo","Ranael Elias Martins","Raquel Paulino vieira","Rayla Fagundes Paulino","Renata Maiara da Silva","Rita de Cássia Vieira dos anjos","Roberta Amaral Bezerra da silva","Robson faustino robson faustino dos santos","Samara eveliny Silva reis","Sara Assis","Sebastião Rodrigues de Lima","Silmara da Silva Santos","Simara Jorge Queiroz","Taciana Oliveira da Silva","Tacizio Camilo da Silva","Tainá da Silva Santos","Tais Josefa","Tamires Gomes da Silva","Tawany Amanda da Silva","Valcides Gomes da Silva","Valdelice Maria da Silva","Valeria Barra da Silva","VANESSA SOARES DOS SANTOS","Vanessa santos","Vinicius Gustavo de jesus Sousa","VITÓRIA KELLY SOBRAL DE LIMA","Wytallon Michael","Yasmim marianne Vieira da Silva"];
+
+  // Normaliza nome para comparação (lowercase, sem acentos, sem espaços duplos)
+  function norm(n) {
+    return (n||'').toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g,'')
+      .replace(/\s+/g,' ').trim();
+  }
+  var listaAtivosNorm = LISTA_ATIVOS.map(norm);
+
+  var antes = students.length;
+  var removidos = [];
+  students = students.filter(function(s) {
+    var nNorm = norm(s.nome);
+    var keep = listaAtivosNorm.some(function(l){ return l === nNorm; });
+    if (!keep) removidos.push(s.nome);
+    return keep;
+  });
+
+  if (removidos.length === 0) {
+    showToast('Nenhum aluno fora da lista encontrado.', 'success');
+    return;
+  }
+
+  saveData();
+  renderList();
+  updateKpis();
+  renderDashStudents();
+  showToast('Removidos ' + removidos.length + ' alunos não presentes na lista ativa.', 'success');
+  console.log('Alunos removidos:', removidos);
+}
+
 // Inicializa tema salvo
 (function(){
   try {
