@@ -293,67 +293,41 @@
 :root[data-theme="light"] body { background:#f0f2f5; color:#101828; }
 
 /* ══════════════════════════════════════════════════
-   CARDS DE ALUNOS (.scard) — alto contraste
+   CARDS DE ALUNOS (.scard) — tema claro = mesmo visual do escuro
    ══════════════════════════════════════════════════ */
 :root[data-theme="light"] .scard {
-  background:#ffffff;
-  border:1px solid #d0d5dd;
-  box-shadow:0 2px 8px rgba(16,24,40,.07);
+  background:#1d2939;
+  border:1px solid #2d3f55;
+  box-shadow:0 2px 8px rgba(0,0,0,.3);
+  color:#ffffff;
 }
-:root[data-theme="light"] .scard:hover {
-  border-color:#1570ef;
-  box-shadow:0 4px 16px rgba(21,112,239,.12);
-  transform:translateY(-2px);
+:root[data-theme="light"] .scard-top {
+  background:#101828!important;
 }
-/* Avatar do aluno */
-:root[data-theme="light"] .scard-av {
-  width:44px!important; height:44px!important;
-  font-size:16px!important; font-weight:800!important;
-  border:2px solid rgba(255,255,255,.25)!important;
-}
-/* Nome do aluno — BRANCO sobre fundo escuro */
 :root[data-theme="light"] .scard-name {
+  color:#ffffff!important;
   font-size:16px!important;
   font-weight:900!important;
-  color:#ffffff!important;
-  line-height:1.3!important;
 }
-/* Objetivo */
 :root[data-theme="light"] .scard-goal {
-  font-size:12px!important;
   color:#9ca3af!important;
-  font-weight:500!important;
 }
-/* Valor do campo (Trimestral, 37, 98.2kg, 30.3) — BRANCO */
-:root[data-theme="light"] .scard-field strong {
-  font-size:16px!important;
-  font-weight:900!important;
-  color:#ffffff!important;
-  display:block!important;
-  line-height:1.2!important;
-}
-/* Label do campo (Plano, Idade, Peso, IMC) — cinza visível */
-:root[data-theme="light"] .scard-field span {
-  font-size:10px!important;
-  font-weight:700!important;
-  color:#9ca3af!important;
-  text-transform:uppercase!important;
-  letter-spacing:.07em!important;
-}
-/* Grid dos campos — FUNDO PRETO */
 :root[data-theme="light"] .scard-info {
-  background:#1d2939!important;
-  border-radius:8px!important;
-  padding:12px!important;
-  gap:10px!important;
+  background:#0d1b2a!important;
   border:1px solid #2d3f55!important;
 }
-/* Divisor de ações */
-:root[data-theme="light"] .scard-actions {
-  border-top:1px solid #e4e7ec;
+:root[data-theme="light"] .scard-field strong {
+  color:#ffffff!important;
+  font-size:15px!important;
+  font-weight:900!important;
 }
-/* Barra de engajamento */
-:root[data-theme="light"] .eng-score-track { background:#e4e7ec; }
+:root[data-theme="light"] .scard-field span {
+  color:#9ca3af!important;
+}
+:root[data-theme="light"] .scard-actions {
+  border-top:1px solid #2d3f55;
+}
+:root[data-theme="light"] .eng-score-track { background:#2d3f55; }
 
 /* ── BADGES DE STATUS — sólidos em luz ── */
 :root[data-theme="light"] .st-ativo {
@@ -558,55 +532,7 @@
   background:#ffffff!important;
 }
 
-/* TOPO do card: fundo preto, nome branco */
-:root[data-theme="light"] .scard-top {
-  background:#101828!important;
-  margin:-18px -18px 14px -18px!important;
-  padding:12px 14px!important;
-  border-radius:12px 12px 0 0!important;
-}
-:root[data-theme="light"] .scard-name {
-  color:#ffffff!important;
-  font-size:15px!important;
-  font-weight:800!important;
-  line-height:1.3!important;
-}
-:root[data-theme="light"] .scard-goal {
-  color:#9ca3af!important;
-  font-size:11px!important;
-  font-weight:600!important;
-}
-/* Avatar iniciais — fica visível no fundo escuro */
-:root[data-theme="light"] .scard-av {
-  width:44px!important; height:44px!important;
-  font-size:15px!important; font-weight:800!important;
-  border:2px solid rgba(255,255,255,.2)!important;
-}
-
-/* ÁREA DE DADOS (Plano/Idade/Peso/IMC): fundo escuro azulado */
-:root[data-theme="light"] .scard-info {
-  background:#1d2939!important;
-  border:1px solid #2d3f55!important;
-  border-radius:8px!important;
-  padding:12px!important;
-  gap:10px!important;
-}
-/* Valor (ex: "Trimestral", "37", "98.2kg") */
-:root[data-theme="light"] .scard-field strong {
-  font-size:16px!important;
-  font-weight:900!important;
-  color:#ffffff!important;
-  display:block!important;
-  line-height:1.2!important;
-}
-/* Label (ex: "Plano", "Idade") */
-:root[data-theme="light"] .scard-field span {
-  font-size:10px!important;
-  font-weight:700!important;
-  color:#6b7280!important;
-  text-transform:uppercase!important;
-  letter-spacing:.07em!important;
-}
+/* cards no tema claro — duplicatas removidas, regras acima são as únicas */
 
 /* ── Rodapé/motivo do card ── */
 :root[data-theme="light"] .scard-footer,
@@ -6100,29 +6026,21 @@ function renderList() {
     var scoreColor = scColor;
     var scoreRingSvg = buildScoreRing(sc.score, scColor);
 
-    var isLt = document.documentElement.getAttribute('data-theme') === 'light';
-    var topSt  = isLt ? 'style="background:#101828;padding:14px 16px;margin:-18px -18px 14px -18px;border-radius:12px 12px 0 0;"' : '';
-    var nameSt = isLt ? 'style="color:#ffffff;font-size:17px;font-weight:900;"' : '';
-    var goalSt = isLt ? 'style="color:#9ca3af;font-size:12px;"' : '';
-    var infoSt = isLt ? 'style="background:#1d2939;border:1px solid #2d3f55;border-radius:8px;padding:12px;"' : '';
-    var valSt  = isLt ? 'style="color:#ffffff;font-size:16px;font-weight:900;display:block;"' : '';
-    var lblSt  = isLt ? 'style="color:#9ca3af;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;"' : '';
-
     var card = document.createElement('div'); card.className='scard';
     card.innerHTML =
-      '<div class="scard-top" '+topSt+'>'
+      '<div class="scard-top">'
         +'<div style="display:flex;align-items:center;gap:8px;">'
           +scoreRingSvg
           +'<div class="scard-av" style="background:'+COLORS[i%COLORS.length]+'">'+initials+'</div>'
-          +'<div><div class="scard-name" '+nameSt+'>'+s.nome+'</div><div class="scard-goal" '+goalSt+'>'+s.objetivo+'</div></div>'
+          +'<div><div class="scard-name">'+s.nome+'</div><div class="scard-goal">'+s.objetivo+'</div></div>'
         +'</div>'
         +'<span class="scard-status '+stClass+'">'+stLabel+'</span>'
       +'</div>'
-      +'<div class="scard-info" '+infoSt+'>'
-        +'<div class="scard-field"><strong '+valSt+'>'+s.plano+'</strong><span '+lblSt+'>Plano</span></div>'
-        +'<div class="scard-field"><strong '+valSt+'>'+(s.idade||'—')+'</strong><span '+lblSt+'>Idade</span></div>'
-        +'<div class="scard-field"><strong '+valSt+'>'+(s.peso?s.peso+'kg':'—')+'</strong><span '+lblSt+'>Peso</span></div>'
-        +'<div class="scard-field"><strong '+valSt+'>'+imc+'</strong><span '+lblSt+'>IMC</span></div>'
+      +'<div class="scard-info">'
+        +'<div class="scard-field"><strong>'+s.plano+'</strong><span>Plano</span></div>'
+        +'<div class="scard-field"><strong>'+(s.idade||'—')+'</strong><span>Idade</span></div>'
+        +'<div class="scard-field"><strong>'+(s.peso?s.peso+'kg':'—')+'</strong><span>Peso</span></div>'
+        +'<div class="scard-field"><strong>'+imc+'</strong><span>IMC</span></div>'
       +'</div>'
       +'<div class="scard-eng-row">'
         +'<div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:0;">'
