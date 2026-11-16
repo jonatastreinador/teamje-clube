@@ -15843,7 +15843,23 @@ function applyTheme(t) {
     if (lbl) lbl.textContent = 'Tema Claro';
     if (icon) icon.innerHTML = '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
   }
-  // Re-renderiza cards para aplicar estilos inline do novo tema
+  // Injeta estilo de alta prioridade para cards no tema claro
+  var el = document.getElementById('je-theme-override');
+  if (!el) { el = document.createElement('style'); el.id='je-theme-override'; document.head.appendChild(el); }
+  if (t === 'light') {
+    el.textContent = [
+      '.scard-top{background:#101828!important;margin:-18px -18px 14px -18px!important;padding:14px 16px!important;border-radius:12px 12px 0 0!important;}',
+      '.scard-name{color:#ffffff!important;font-size:16px!important;font-weight:900!important;}',
+      '.scard-goal{color:#9ca3af!important;font-size:12px!important;}',
+      '.scard-av{border:2px solid rgba(255,255,255,.2)!important;}',
+      '.scard-info{background:#1d2939!important;border:1px solid #2d3f55!important;border-radius:8px!important;padding:12px!important;margin-bottom:12px!important;}',
+      '.scard-field strong{color:#ffffff!important;font-size:15px!important;font-weight:900!important;display:block!important;}',
+      '.scard-field span{color:#9ca3af!important;font-size:10px!important;font-weight:700!important;text-transform:uppercase!important;letter-spacing:.07em!important;}'
+    ].join('\n');
+  } else {
+    el.textContent = '';
+  }
+  // Re-renderiza cards
   try { renderList(); } catch(e){}
   try { renderDashStudents(); } catch(e){}
 }
