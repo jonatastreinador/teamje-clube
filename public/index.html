@@ -295,39 +295,50 @@
 /* ══════════════════════════════════════════════════
    CARDS DE ALUNOS (.scard) — tema claro = mesmo visual do escuro
    ══════════════════════════════════════════════════ */
+:root[data-theme="light"] {
+  --scard-bg:    #1d2939;
+  --scard-top:   #101828;
+  --scard-info:  #0d1b2a;
+  --scard-bdr:   #2d3f55;
+  --scard-txt:   #ffffff;
+  --scard-muted: #9ca3af;
+}
 :root[data-theme="light"] .scard {
-  background:#1d2939!important;
-  border:1px solid #2d3f55!important;
+  background:var(--scard-bg)!important;
+  border:1px solid var(--scard-bdr)!important;
   box-shadow:0 2px 8px rgba(0,0,0,.3)!important;
-  color:#ffffff!important;
+  color:var(--scard-txt)!important;
 }
 :root[data-theme="light"] .scard-top {
-  background:#101828!important;
+  background:var(--scard-top)!important;
 }
 :root[data-theme="light"] .scard-name {
-  color:#ffffff!important;
+  color:var(--scard-txt)!important;
   font-size:16px!important;
   font-weight:900!important;
 }
 :root[data-theme="light"] .scard-goal {
-  color:#9ca3af!important;
+  color:var(--scard-muted)!important;
 }
 :root[data-theme="light"] .scard-info {
-  background:#0d1b2a!important;
-  border:1px solid #2d3f55!important;
+  background:var(--scard-info)!important;
+  border:1px solid var(--scard-bdr)!important;
+}
+:root[data-theme="light"] .scard-field {
+  background:var(--scard-info)!important;
 }
 :root[data-theme="light"] .scard-field strong {
-  color:#ffffff!important;
+  color:var(--scard-txt)!important;
   font-size:15px!important;
   font-weight:900!important;
 }
 :root[data-theme="light"] .scard-field span {
-  color:#9ca3af!important;
+  color:var(--scard-muted)!important;
 }
 :root[data-theme="light"] .scard-actions {
-  border-top:1px solid #2d3f55;
+  border-top:1px solid var(--scard-bdr)!important;
 }
-:root[data-theme="light"] .eng-score-track { background:#2d3f55; }
+:root[data-theme="light"] .eng-score-track { background:var(--scard-bdr)!important; }
 
 /* ── BADGES DE STATUS — sólidos em luz ── */
 :root[data-theme="light"] .st-ativo {
