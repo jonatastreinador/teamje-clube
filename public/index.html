@@ -3333,46 +3333,7 @@ input[type="checkbox"] {
   <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <!-- OVERRIDE TEMA CLARO — carregado por último, prioridade máxima -->
-  <style id="je-theme-override">
-/* Regras hardcoded alta prioridade — cards no tema claro */
-html[data-theme="light"] .scard-top {
-  background:#101828 !important;
-  margin:-18px -18px 14px -18px !important;
-  padding:14px 16px !important;
-  border-radius:12px 12px 0 0 !important;
-}
-html[data-theme="light"] .scard-name {
-  color:#ffffff !important;
-  font-size:17px !important;
-  font-weight:900 !important;
-}
-html[data-theme="light"] .scard-goal {
-  color:#9ca3af !important;
-  font-size:12px !important;
-}
-html[data-theme="light"] .scard-av {
-  border:2px solid rgba(255,255,255,.25) !important;
-}
-html[data-theme="light"] .scard-info {
-  background:#1d2939 !important;
-  border:1px solid #2d3f55 !important;
-  border-radius:8px !important;
-  padding:12px !important;
-}
-html[data-theme="light"] .scard-field strong {
-  color:#ffffff !important;
-  font-size:16px !important;
-  font-weight:900 !important;
-  display:block !important;
-}
-html[data-theme="light"] .scard-field span {
-  color:#9ca3af !important;
-  font-size:10px !important;
-  font-weight:700 !important;
-  text-transform:uppercase !important;
-  letter-spacing:.07em !important;
-}
-  </style>
+  <style id="je-theme-override"></style>
 </head>
 <body>
 
@@ -6139,21 +6100,29 @@ function renderList() {
     var scoreColor = scColor;
     var scoreRingSvg = buildScoreRing(sc.score, scColor);
 
+    var isLt = document.documentElement.getAttribute('data-theme') === 'light';
+    var topSt  = isLt ? 'style="background:#101828;padding:14px 16px;margin:-18px -18px 14px -18px;border-radius:12px 12px 0 0;"' : '';
+    var nameSt = isLt ? 'style="color:#ffffff;font-size:17px;font-weight:900;"' : '';
+    var goalSt = isLt ? 'style="color:#9ca3af;font-size:12px;"' : '';
+    var infoSt = isLt ? 'style="background:#1d2939;border:1px solid #2d3f55;border-radius:8px;padding:12px;"' : '';
+    var valSt  = isLt ? 'style="color:#ffffff;font-size:16px;font-weight:900;display:block;"' : '';
+    var lblSt  = isLt ? 'style="color:#9ca3af;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;"' : '';
+
     var card = document.createElement('div'); card.className='scard';
     card.innerHTML =
-      '<div class="scard-top">'
+      '<div class="scard-top" '+topSt+'>'
         +'<div style="display:flex;align-items:center;gap:8px;">'
           +scoreRingSvg
           +'<div class="scard-av" style="background:'+COLORS[i%COLORS.length]+'">'+initials+'</div>'
-          +'<div><div class="scard-name">'+s.nome+'</div><div class="scard-goal">'+s.objetivo+'</div></div>'
+          +'<div><div class="scard-name" '+nameSt+'>'+s.nome+'</div><div class="scard-goal" '+goalSt+'>'+s.objetivo+'</div></div>'
         +'</div>'
         +'<span class="scard-status '+stClass+'">'+stLabel+'</span>'
       +'</div>'
-      +'<div class="scard-info">'
-        +'<div class="scard-field"><strong>'+s.plano+'</strong><span>Plano</span></div>'
-        +'<div class="scard-field"><strong>'+(s.idade||'—')+'</strong><span>Idade</span></div>'
-        +'<div class="scard-field"><strong>'+(s.peso?s.peso+'kg':'—')+'</strong><span>Peso</span></div>'
-        +'<div class="scard-field"><strong>'+imc+'</strong><span>IMC</span></div>'
+      +'<div class="scard-info" '+infoSt+'>'
+        +'<div class="scard-field"><strong '+valSt+'>'+s.plano+'</strong><span '+lblSt+'>Plano</span></div>'
+        +'<div class="scard-field"><strong '+valSt+'>'+(s.idade||'—')+'</strong><span '+lblSt+'>Idade</span></div>'
+        +'<div class="scard-field"><strong '+valSt+'>'+(s.peso?s.peso+'kg':'—')+'</strong><span '+lblSt+'>Peso</span></div>'
+        +'<div class="scard-field"><strong '+valSt+'>'+imc+'</strong><span '+lblSt+'>IMC</span></div>'
       +'</div>'
       +'<div class="scard-eng-row">'
         +'<div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:0;">'
