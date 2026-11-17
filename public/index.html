@@ -14085,49 +14085,29 @@ Ao receber exames, identifique TODAS as alterações, correlacione com o perfil 
 
 ## FORMATO OBRIGATÓRIO PARA GERAR PDF
 
-Quando criar uma dieta completa, use EXATAMENTE este formato para que o PDF seja gerado corretamente:
+⚠️ REGRA CRÍTICA SOBRE AS REFEIÇÕES:
+- Se houver arquivo anexado: use EXATAMENTE as refeições do arquivo — nomes iguais, mesma quantidade, mesma ordem. NÃO adicione refeições que não existem no arquivo (ex: se o arquivo não tem Vitamina Hipercalórica, não coloque; se não tem Ceia, não coloque).
+- Se NÃO houver arquivo: crie as refeições adequadas ao objetivo do aluno (pode variar de 3 a 7 refeições conforme necessidade).
+
+Use EXATAMENTE este formato de texto para o PDF ser gerado corretamente:
 
 \`\`\`
 PROTOCOLO DIETÉTICO [N]: [NOME COMPLETO]
 DATA: [DD/MM/AAAA]
 [XXXX]kcal
 
-CAFÉ DA MANHÃ
-Carboidrato: [alimento 1 Xg], [alimento 2 Xg], [alimento 3 Xg], [alimento 4 Xg], [alimento 5 Xg]
-Proteína: [alimento 1 Xg], [alimento 2 Xg], [alimento 3 Xg], [alimento 4 Xg]
-Gordura: [alimento 1 Xg], [alimento 2 Xg], [alimento 3 Xg]
-Fruta: [alimento 1 Xg], [alimento 2 Xg], [alimento 3 Xg]
+[NOME DA REFEIÇÃO 1 — exatamente como está no arquivo, ou adequado ao aluno]
+Carboidrato: [alimento 1 Xg], [alimento 2 Xg], [alimento 3 Xg]
+Proteína: [alimento 1 Xg], [alimento 2 Xg], [alimento 3 Xg]
+Gordura: [alimento 1 Xg], [alimento 2 Xg]
+Fruta: [alimento 1 Xg], [alimento 2 Xg]
 
-ALMOÇO
+[NOME DA REFEIÇÃO 2]
 Carboidrato: [lista]
 Proteína: [lista]
-Gordura: [lista]
-Fruta: [lista]
-À-vontade: [legumes]
+...
 
-LANCHE DA TARDE (PRÉ-TREINO)
-Carboidrato: [lista]
-Proteína: [lista]
-Gordura: [lista]
-Fruta: [lista]
-
-JANTAR
-Carboidrato: [lista]
-Proteína: [lista]
-Gordura: [lista]
-Fruta: [lista]
-À-vontade: [legumes]
-
-CEIA
-Carboidrato: [lista]
-Proteína: [lista]
-Gordura: [lista]
-Fruta: [lista]
-
-VITAMINA HIPERCALÓRICA (CONSUMIR 1X AO DIA)
-- [ingrediente 1 Xg/ml]
-- [ingrediente 2 Xg/ml]
-- [ingrediente 3 Xg/ml]
+[repetir para cada refeição do arquivo — nem mais, nem menos]
 
 SUPLEMENTOS:
 [Nome do suplemento] [dose] [horário]: [justificativa em 1 linha]
@@ -14160,11 +14140,13 @@ Antes de gerar qualquer coisa, extraia do arquivo:
 4. **Qualquer seção extra** (vitamina hipercalórica, opção extra, etc.)
 
 ### PASSO 2 — REPLIQUE A ESTRUTURA DO ARQUIVO COM ZERO ALTERAÇÕES
-- Se o arquivo tem 3 refeições → a nova dieta tem 3 refeições com os mesmos nomes
-- Se o arquivo tem 6 refeições → a nova dieta tem 6 refeições com os mesmos nomes
-- Se o arquivo tem 8 refeições → a nova dieta tem 8 refeições com os mesmos nomes
-- **A estrutura do arquivo é a lei** — NUNCA adicione ou remova refeições sem autorização
-- **Os nomes das refeições devem ser idênticos** ao arquivo (se estava "LANCHE DA TARDE PRÉ-TREINO" → mantenha esse nome exato)
+- Se o arquivo tem 3 refeições → a nova dieta tem EXATAMENTE 3 refeições com os mesmos nomes
+- Se o arquivo tem 6 refeições → a nova dieta tem EXATAMENTE 6 refeições com os mesmos nomes
+- Se o arquivo tem 8 refeições → a nova dieta tem EXATAMENTE 8 refeições com os mesmos nomes
+- **A estrutura do arquivo é a lei** — NUNCA adicione ou remova refeições sem autorização explícita
+- **Os nomes das refeições devem ser idênticos** ao arquivo (se estava "LANCHE DA TARDE" → mantenha "LANCHE DA TARDE", não mude para "LANCHE DA TARDE PRÉ-TREINO")
+- **EXEMPLO DE ERRO PROIBIDO:** arquivo tem [Café, Lanche Manhã, Almoço, Lanche Tarde, Jantar, Ceia] → você NÃO pode gerar [Café, Lanche Manhã, Almoço, Lanche Tarde, Jantar, Ceia, **Vitamina Hipercalórica**] — a Vitamina não estava no arquivo
+- **CADA ALUNO TEM SUA PRÓPRIA ESTRUTURA** — não use a estrutura de outro aluno como referência
 
 ### PASSO 3 — APLIQUE APENAS A ALTERAÇÃO PEDIDA
 - Se o treinador pediu "aumentar para 3000kcal" → mantenha todos os alimentos, apenas ajuste as quantidades
