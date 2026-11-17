@@ -14525,8 +14525,8 @@ function dietGerarPDFNavegador(diet) {
   var CSS = [
     '@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap");',
     '*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }',
-    'html { font-size:14px; }',
-    'body { font-family:"Inter",Arial,sans-serif; background:#e5e7eb; color:#111; }',
+    'html { font-size:14px; color-scheme:light; }',
+    'body { font-family:"Inter",Arial,sans-serif; background:#e5e7eb; color:#111; -webkit-print-color-adjust:exact; print-color-adjust:exact; }',
     '#toolbar { position:fixed; top:0; left:0; right:0; min-height:54px; background:#1d2939; display:flex; align-items:center; gap:6px; padding:0 14px; z-index:9999; box-shadow:0 2px 8px rgba(0,0,0,.4); flex-wrap:wrap; }',
     '#toolbar .tb-sep { width:1px; height:28px; background:rgba(255,255,255,.18); margin:0 4px; }',
     '#toolbar button { padding:6px 12px; border:none; border-radius:5px; cursor:pointer; font-size:12px; font-weight:700; }',
@@ -14579,16 +14579,19 @@ function dietGerarPDFNavegador(diet) {
     '[contenteditable="true"] { outline:none; min-height:4px; }',
     '[contenteditable="true"]:focus { outline:2px dashed rgba(21,112,239,.5); outline-offset:2px; border-radius:3px; }',
     '@media print {',
+    '  * { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; color-adjust:exact!important; }',
     '  #toolbar { display:none!important; }',
     '  body { padding-top:0!important; background:#fff; }',
     '  .page { margin:0!important; box-shadow:none!important; break-after:page; page-break-after:always; }',
     '  .page:last-child { break-after:avoid; page-break-after:avoid; }',
     '  .meal-block { break-inside:avoid; page-break-inside:avoid; }',
-    '  .meal-title { break-after:avoid; page-break-after:avoid; }',
-    '  .supl-item { break-inside:avoid; page-break-inside:avoid; }',
+    '  .meal-title { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; background:#111!important; color:#fff!important; break-after:avoid; page-break-after:avoid; }',
+    '  .livre-capa { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; background:#111!important; color:#fff!important; }',
+    '  .passo { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; break-inside:avoid; page-break-inside:avoid; }',
+    '  .supl-item { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; background:#f8faff!important; break-inside:avoid; page-break-inside:avoid; }',
     '  .sono-item { break-inside:avoid; page-break-inside:avoid; }',
-    '  .passo { break-inside:avoid; page-break-inside:avoid; }',
     '  .hdr { break-after:avoid; page-break-after:avoid; }',
+    '  .page::before { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; display:block!important; opacity:0.04!important; }',
     '  @page { size:A4; margin:0; }',
     '}',
   ].join('\n');
@@ -14749,7 +14752,7 @@ function dietGerarPDFNavegador(diet) {
     +'</div>';
 
   win.document.write('<!DOCTYPE html><html lang="pt-BR"><head>'
-    +'<meta charset="UTF-8"><title>Dieta '+num+' &mdash; '+nome+'</title>'
+    +'<meta charset="UTF-8"><meta name="color-scheme" content="light"><title>Dieta '+num+' &mdash; '+nome+'</title>'
     +'<style>'+CSS+'</style>'
     +'</head><body>'
     +toolbar
