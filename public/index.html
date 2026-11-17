@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JE Clube Dashboard v84f</title>
+<title>JE Clube Dashboard v84g</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
@@ -14358,6 +14358,8 @@ function dietExportPDF() {
 }
 
 function dietParseForPDF(diet) {
+  // Recebe o objeto diet {nome, numero, data, kcal, rawText}
+  // Retorna objeto estruturado para dietGerarPDFNavegador
   var text = (typeof diet === 'string') ? diet : (diet.rawText || '');
   var nome   = (typeof diet === 'object' && diet.nome)   ? diet.nome   : 'Aluno';
   var numero = (typeof diet === 'object' && diet.numero) ? diet.numero : '1';
@@ -14366,49 +14368,67 @@ function dietParseForPDF(diet) {
   var kcal   = kc ? kc[1] : ((typeof diet === 'object' && diet.kcal) ? diet.kcal : '2000');
 
   // ── Parse refeições ──────────────────────────────────────────────
-  // Splits on meal headers like "CAFÉ DA MANHÃ", "ALMOÇO", "JANTAR", etc.
-  var refeicoes = [];
-  var mealHeaderRe = /(?:^|\n)((?:CAF[ÉE]\s*DA\s*MANH[ÃA]|LANCHE\s*(?:DA\s*(?:MANH[ÃA]|TARDE)|PRÉ-TREINO|PÓS-TREINO)?|ALMO[ÇC]O|JANTAR|CEIA|PR[ÉE]-TREINO|P[ÓO]S-TREINO)[^\n]*)/gi;
+  // Detecta blocos de refeição pelo header (linha toda maiúscula ou palavras-chave)
+  var MEAL_RE = /(?:^|\n)([ \t]*(?:CAF[EÉ]\s*DA\s*MANH[ÃA]|LANCHE\s*(?:DA\s*(?:MANH[ÃA]|TARDE)|PR[EÉ]-TREINO|P[OÓ]S-TREINO)?|ALMO[CÇ]O|JANTAR|CEIA|PR[EÉ]-TREINO|P[OÓ]S-TREINO)[^\n]*)/gi;
   var matches = [];
   var m;
-  while ((m = mealHeaderRe.exec(text)) !== null) {
-    matches.push({ name: m[1].trim(), index: m.index + (m[0].indexOf(m[1])) });
+  while ((m = MEAL_RE.exec(text)) !== null) {
+    var headerStr = m[1].trim();
+    var idx = m.index + m[0].lastIndexOf(headerStr);
+    matches.push({ name: headerStr, index: idx });
   }
+
+  var refeicoes = [];
   for (var i = 0; i < matches.length; i++) {
     var mealName = matches[i].name;
-    var mealStart = matches[i].index + mealName.length;
-    var mealEnd = (i + 1 < matches.length) ? matches[i+1].index : text.length;
-    var mealText = text.slice(mealStart, mealEnd).trim();
+    var bodyStart = matches[i].index + mealName.length;
+    var bodyEnd   = (i+1 < matches.length) ? matches[i+1].index : text.length;
+    var body      = text.slice(bodyStart, bodyEnd).trim();
 
-    // Parse lines: "Categoria: opções" or "- Categoria: opções" or "* Categoria: opções"
     var itens = [];
     var avontade = '';
-    var lines = mealText.split('\n');
+    var lines = body.split('\n');
+
     lines.forEach(function(line) {
-      line = line.replace(/^[\s\-\*•]+/, '').trim();
-      if (!line) return;
-      // Skip lines that look like kcal totals or macros
-      if (/^\d+\s*kcal/i.test(line)) return;
-      if (/^(calorias|macros|proteína|carboidrato|gordura):/i.test(line)) return;
+      var l = line.replace(/^[\s\-\*•►]+/, '').trim();
+      if (!l) return;
+      // Skip kcal/macro totals, markdown headers, table separators
+      if (/^\d+\s*kcal/i.test(l)) return;
+      if (/^#{1,3}\s/.test(l)) return;
+      if (/^\|[-| ]+\|$/.test(l)) return;
+      if (/^(calorias totais|macros|macronutrientes|proteína total|carboidrato total|gordura total)/i.test(l)) return;
+      // Skip section headers that are not meals (SUPLEMENTOS, RECOMENDAÇÕES, etc.)
+      if (/^(SUPLEMENTA|RECOMENDA|HIGIENE|SONO|RESUMO|OBSERVA|DICAS|ESTRATÉGIA)/i.test(l)) return;
       // "À vontade" line
-      if (/à[\s-]*vontade/i.test(line)) {
-        var av = line.replace(/^à[\s-]*vontade[:\s]*/i, '').trim();
-        if (av) avontade = av;
+      if (/^à[\s-]*vontade/i.test(l)) {
+        var avVal = l.replace(/^à[\s-]*vontade[:\s]*/i, '').trim();
+        if (avVal) avontade = avVal;
         return;
       }
-      // Try "Categoria: opções"
-      var colonIdx = line.indexOf(':');
-      if (colonIdx > 0 && colonIdx < 35) {
-        var cat = line.slice(0, colonIdx).trim();
-        var ops = line.slice(colonIdx + 1).trim();
-        if (cat && ops) {
+      // Try "Categoria: opções" — colon must be within first 35 chars
+      var ci = l.indexOf(':');
+      if (ci > 0 && ci <= 35) {
+        var cat = l.slice(0, ci).trim();
+        var ops = l.slice(ci+1).trim();
+        // Category should be a word (no special chars), options non-empty
+        if (cat && ops && /^[A-Za-zÀ-ÿ\s\d\-\/\(\)\.]+$/.test(cat) && cat.length <= 35) {
           itens.push({ categoria: cat, opcoes: ops });
           return;
         }
       }
-      // Fallback: treat whole line as an option under "Alimento"
-      if (line.length > 3 && line.length < 200) {
-        itens.push({ categoria: 'Alimento', opcoes: line });
+      // Markdown table row: | Categoria | Opções |
+      var tblMatch = l.match(/^\|([^|]+)\|([^|]+)\|/);
+      if (tblMatch) {
+        var cat2 = tblMatch[1].replace(/\*\*/g,'').trim();
+        var ops2 = tblMatch[2].replace(/\*\*/g,'').trim();
+        if (cat2 && ops2 && !/^-+$/.test(cat2)) {
+          itens.push({ categoria: cat2, opcoes: ops2 });
+        }
+        return;
+      }
+      // Fallback: add as generic food line if meaningful length
+      if (l.length > 5 && l.length < 300 && !/^(categoria|opções|options)/i.test(l)) {
+        itens.push({ categoria: 'Alimento', opcoes: l });
       }
     });
 
@@ -14423,31 +14443,39 @@ function dietParseForPDF(diet) {
   var rec_musculacao = '';
   var rec_dicas = [];
 
-  var recBlock = text.match(/RECOMENDA[ÇC][ÕO]ES?([\s\S]*?)(?:SUPLEMENTA[ÇC][ÃA]O|SUPLEMENTOS|$)/i);
-  if (recBlock) {
-    var rb = recBlock[1];
-    var cardioM = rb.match(/(?:CARDIO|AERÓBICO)[^\n]*\n([\s\S]*?)(?=\n[A-ZÁÉÍÓÚÂÊÔÃÕ]{3}|\n[-*•]?\s*[A-ZÁÉÍÓÚÂÊÔÃÕ]{4}|$)/i);
-    if (cardioM) rec_cardio = cardioM[1].replace(/^[\s\-\*•]+/gm,'').replace(/\n+/g,' ').trim();
-    var aguaM = rb.match(/(?:ÁGUA|HIDRATA[ÇC][ÃA]O)[^\n]*\n([\s\S]*?)(?=\n[A-ZÁÉÍÓÚÂÊÔÃÕ]{3}|\n[-*•]?\s*[A-ZÁÉÍÓÚÂÊÔÃÕ]{4}|$)/i);
-    if (aguaM) rec_agua = aguaM[1].replace(/^[\s\-\*•]+/gm,'').replace(/\n+/g,' ').trim();
-    var muscM = rb.match(/(?:MUSCULA[ÇC][ÃA]O|TREINO)[^\n]*\n([\s\S]*?)(?=\n[A-ZÁÉÍÓÚÂÊÔÃÕ]{3}|\n[-*•]?\s*[A-ZÁÉÍÓÚÂÊÔÃÕ]{4}|$)/i);
-    if (muscM) rec_musculacao = muscM[1].replace(/^[\s\-\*•]+/gm,'').replace(/\n+/g,' ').trim();
-    // Extra tips
-    var dicasLines = rb.split('\n').filter(function(l) {
-      l = l.trim();
-      return l && /^[-\*•]/.test(l) && !/CARDIO|ÁGUA|MUSCULA/i.test(l);
+  // Look for recommendations block
+  var recStart = text.search(/RECOMENDA[CÇ][OÕ]ES?/i);
+  if (recStart >= 0) {
+    // End at SUPLEMENTAÇÃO, REFEIÇÃO LIVRE, or end
+    var recEndMatch = text.slice(recStart).search(/SUPLEMENTA[CÇ][AÃ]O|SUPLEMENTOS|REFEI[CÇ][AÃ]O LIVRE|HIGIENE DO SONO/i);
+    var rb = recEndMatch >= 0 ? text.slice(recStart, recStart + recEndMatch) : text.slice(recStart);
+
+    var cM = rb.match(/CARDIO[^\n]*\n([\s\S]*?)(?=\n[A-ZÁÉÍÓÚÂÊÔÃÕ]{3,}[^a-z]|\n[-*]|\n\n|$)/i);
+    if (cM) rec_cardio = cM[1].replace(/^[\s\-\*•]+/gm,'').replace(/\n+/g,' ').trim();
+    var aM = rb.match(/[ÁA]GUA[^\n]*\n([\s\S]*?)(?=\n[A-ZÁÉÍÓÚÂÊÔÃÕ]{3,}[^a-z]|\n[-*]|\n\n|$)/i);
+    if (aM) rec_agua = aM[1].replace(/^[\s\-\*•]+/gm,'').replace(/\n+/g,' ').trim();
+    var muM = rb.match(/MUSCULA[CÇ][AÃ]O[^\n]*\n([\s\S]*?)(?=\n[A-ZÁÉÍÓÚÂÊÔÃÕ]{3,}[^a-z]|\n[-*]|\n\n|$)/i);
+    if (muM) rec_musculacao = muM[1].replace(/^[\s\-\*•]+/gm,'').replace(/\n+/g,' ').trim();
+
+    // Extra dicas
+    rb.split('\n').forEach(function(l) {
+      l = l.replace(/^[\s\-\*•]+/,'').trim();
+      if (l && l.length > 10 && !/CARDIO|[ÁA]GUA|MUSCULA|RECOMENDA/i.test(l) && !/^[A-ZÁÉÍÓÚÂÊÔÃÕ\s]{10,}$/.test(l)) {
+        rec_dicas.push(l);
+      }
     });
-    rec_dicas = dicasLines.map(function(l){ return l.replace(/^[\s\-\*•]+/,'').trim(); }).filter(Boolean).slice(0,6);
+    rec_dicas = rec_dicas.slice(0,5);
   }
 
   // ── Parse suplementos ────────────────────────────────────────────
   var suplementos = [];
-  var suplBlock = text.match(/SUPLEMENTA[ÇC][ÃA]O|SUPLEMENTOS([\s\S]*?)(?=\n[A-ZÁÉÍÓÚÂÊÔÃÕ]{5}|\n#{1,3}\s|$)/i);
-  if (suplBlock) {
-    var sb = suplBlock[1] || '';
+  var suplStart = text.search(/SUPLEMENTA[CÇ][AÃ]O|SUPLEMENTOS\b/i);
+  if (suplStart >= 0) {
+    var suplEnd = text.slice(suplStart).search(/REFEI[CÇ][AÃ]O LIVRE|HIGIENE DO SONO|RECOMENDA[CÇ][OÕ]/i);
+    var sb = suplEnd >= 0 ? text.slice(suplStart, suplStart+suplEnd) : text.slice(suplStart, suplStart+1000);
     sb.split('\n').forEach(function(line) {
-      line = line.replace(/^[\s\-\*•]+/, '').trim();
-      if (line && line.length > 3) suplementos.push(line);
+      line = line.replace(/^[\s\-\*•►]+/,'').trim();
+      if (line && line.length > 5 && !/^SUPLEMENTA/i.test(line)) suplementos.push(line);
     });
   }
 
@@ -14465,8 +14493,9 @@ function dietParseForPDF(diet) {
 function dietGerarPDFNavegador(diet) {
   var parsed = dietParseForPDF(diet);
   var logo   = typeof LOGO_B64 !== 'undefined' ? LOGO_B64 : '';
+  var CRN    = '50708';  // CRN fixo TEAMJE
 
-  // ── CSS profissional ─────────────────────────────────────────────
+  // ── CSS profissional — idêntico ao modelo PDF TEAMJE ─────────────
   var CSS = [
     '@import url(\'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap\');',
     '*{margin:0;padding:0;box-sizing:border-box;}',
@@ -14479,64 +14508,77 @@ function dietGerarPDFNavegador(diet) {
     '.content{position:relative;z-index:1;}',
 
     /* Header */
-    '.hdr{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #0d0d0d;padding-bottom:10px;margin-bottom:14px;}',
-    '.hdr-title{font-size:18px;font-weight:900;text-transform:uppercase;letter-spacing:.5px;line-height:1.2;}',
-    '.hdr-sub{font-size:12px;color:#555;margin-top:3px;font-weight:600;}',
-    '.hdr-logo{width:90px;height:auto;flex-shrink:0;}',
+    '.hdr{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:8px;border-bottom:2px solid #111;margin-bottom:18px;}',
+    '.hdr-title{font-size:18px;font-weight:900;letter-spacing:-.02em;text-transform:uppercase;}',
+    '.hdr-sub{font-size:12px;color:#555;margin-top:3px;}',
+    '.hdr-crn{font-size:12px;color:#555;margin-top:1px;}',
+    '.hdr-logo{width:70px;height:auto;}',
 
-    /* Section banners */
-    '.banner{background:#0d0d0d;color:#fff;text-align:center;padding:10px 16px;font-size:15px;font-weight:900;letter-spacing:2px;text-transform:uppercase;margin:16px 0 12px;border-radius:4px;}',
-
-    /* Pill (meal names) */
-    '.pill-wrap{text-align:center;margin:14px 0 8px;}',
-    '.pill{display:inline-block;background:#0d0d0d;color:#1a63ff;padding:8px 28px;border-radius:30px;font-size:13px;font-weight:900;letter-spacing:2px;text-transform:uppercase;}',
+    /* Banner */
+    '.banner{text-align:center;font-size:14px;font-weight:700;letter-spacing:.35em;color:#555;margin:14px 0 10px;}',
 
     /* Passo-a-passo */
-    '.passo{text-align:center;margin-bottom:14px;background:#f8f9ff;border:1px solid #e0e4ff;border-radius:8px;padding:12px;}',
-    '.passo-title{font-size:13px;font-weight:900;text-transform:uppercase;margin-bottom:6px;}',
-    '.passo-cat{font-size:12.5px;font-weight:700;color:#1a63ff;line-height:1.8;}',
+    '.passo{border:1px solid #ccc;border-radius:6px;padding:10px 14px;margin-bottom:14px;text-align:center;}',
+    '.passo-title{font-size:12px;font-weight:900;margin-bottom:4px;}',
+    '.passo-cat{font-size:11px;color:#1570ef;font-weight:600;}',
 
-    /* Meal tables */
-    '.meal-table{width:100%;border-collapse:collapse;margin-bottom:4px;font-size:13px;}',
-    '.meal-table th{background:#0d0d0d;color:#fff;padding:8px 10px;text-align:center;font-size:12px;font-weight:700;letter-spacing:.5px;}',
-    '.meal-table td{padding:8px 10px;border:1px solid #dde0ec;text-align:center;vertical-align:middle;}',
-    '.meal-table td:first-child{font-weight:700;background:#f0f2ff;width:110px;text-align:center;}',
-    '.meal-table tr:nth-child(even) td:not(:first-child){background:#fafbff;}',
-    '.meal-table .opcoes{font-size:12.5px;line-height:1.5;}',
+    /* Meal pill */
+    '.pill-wrap{text-align:center;margin:12px 0 6px;}',
+    '.pill{display:inline-block;font-size:13px;font-weight:800;letter-spacing:.22em;color:#1570ef;text-transform:uppercase;}',
+
+    /* Meal table */
+    '.meal-table{width:100%;border-collapse:collapse;margin-bottom:4px;}',
+    '.meal-table th{text-align:left;font-size:11px;font-weight:600;color:#777;border-bottom:1px solid #ddd;padding:4px 8px;}',
+    '.meal-table td{padding:6px 8px;border-bottom:1px solid #eee;font-size:12px;vertical-align:top;}',
+    '.meal-table td:first-child{font-weight:700;width:130px;min-width:100px;}',
+    '.meal-table td.opcoes{color:#333;}',
+    '.meal-table tr:last-child td{border-bottom:none;}',
 
     /* Recomendações */
-    '.rec-title{font-size:13px;font-weight:900;color:#0d0d0d;margin-top:10px;margin-bottom:3px;}',
-    '.rec-text{font-size:13px;line-height:1.6;margin-bottom:8px;text-align:justify;}',
-    '.rec-dica{font-size:12.5px;line-height:1.6;margin-bottom:3px;padding-left:16px;position:relative;}',
-    '.rec-dica::before{content:\'✔\';position:absolute;left:0;color:#1a63ff;font-weight:700;}',
-
-    /* Suplementos */
-    '.supl-item{margin-bottom:12px;padding:10px 14px;border-left:4px solid #1a63ff;background:#f6f8ff;border-radius:0 6px 6px 0;}',
-    '.supl-nome{font-size:13px;font-weight:900;text-transform:uppercase;margin-bottom:3px;}',
-    '.supl-seta{color:#1a63ff;font-weight:700;margin:0 4px;}',
-    '.supl-horario{font-size:12px;font-weight:700;color:#1a63ff;}',
-    '.supl-justif{font-size:12px;color:#333;margin-top:4px;line-height:1.5;text-align:justify;}',
+    '.rec-title{font-size:13px;font-weight:900;text-transform:uppercase;margin:12px 0 2px;}',
+    '.rec-text{font-size:12px;color:#333;margin-bottom:6px;}',
+    '.rec-dica{font-size:12px;color:#333;margin-bottom:3px;}',
+    '.rec-dica::before{content:"• ";}',
 
     /* Refeição Livre */
-    '.livre-box{background:#0d0d0d;color:#fff;text-align:center;padding:20px;border-radius:6px;margin:16px 0;}',
-    '.livre-box h2{font-size:20px;font-weight:900;letter-spacing:2px;}',
-    '.livre-subtitle{font-size:14px;font-weight:700;letter-spacing:4px;margin-top:4px;}',
-    '.livre-bold{font-size:13.5px;font-weight:900;color:#0d0d0d;margin-top:12px;}',
-    '.livre-text{font-size:13px;line-height:1.65;text-align:justify;margin-bottom:8px;}',
-    '.livre-list{font-size:13px;line-height:1.9;padding-left:18px;}',
-    '.livre-list li::marker{color:#1a63ff;font-weight:700;}',
+    '.livre-box{text-align:center;padding:16px;background:#f9f9f9;border-radius:8px;margin:14px 0;}',
+    '.livre-box h2{font-size:22px;font-weight:900;letter-spacing:.12em;}',
+    '.livre-subtitle{font-size:14px;font-weight:700;letter-spacing:.3em;color:#555;margin-top:4px;}',
+    '.livre-text{font-size:12px;color:#333;margin-bottom:8px;}',
+    '.livre-bold{font-size:13px;font-weight:900;text-transform:uppercase;margin:10px 0 4px;}',
+    '.livre-list{padding-left:18px;font-size:12px;color:#333;}',
+    '.livre-list li{margin-bottom:3px;}',
 
-    /* Higiene do Sono */
-    '.sono-item{margin-bottom:10px;}',
-    '.sono-bold{font-size:13px;font-weight:900;text-transform:uppercase;}',
-    '.sono-text{font-size:12.5px;line-height:1.6;text-align:justify;}',
-    '.sono-dica{font-size:12.5px;color:#1a63ff;font-weight:700;margin-top:2px;}',
+    /* Suplementos */
+    '.supl-item{border:1px solid #eee;border-radius:6px;padding:10px 12px;margin-bottom:8px;}',
+    '.supl-nome{font-size:13px;font-weight:800;text-transform:uppercase;}',
+    '.supl-seta{color:#1570ef;}',
+    '.supl-horario{font-size:12px;font-weight:600;color:#1570ef;}',
+    '.supl-justif{font-size:11.5px;color:#555;margin-top:4px;}',
+
+    /* Higiene do sono */
+    '.sono-item{margin-bottom:12px;}',
+    '.sono-bold{font-size:13px;font-weight:800;text-transform:uppercase;margin-bottom:2px;}',
+    '.sono-text{font-size:12px;color:#333;}',
+    '.sono-dica{font-size:11.5px;color:#1570ef;margin-top:2px;}',
+
+    /* Editor toolbar */
+    '#edit-bar{position:fixed;top:0;left:0;right:0;background:#1d2939;padding:10px 16px;display:flex;gap:10px;align-items:center;z-index:999;box-shadow:0 2px 8px rgba(0,0,0,.3);}',
+    '#edit-bar button{padding:8px 16px;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:700;}',
+    '#btn-print{background:#1570ef;color:#fff;}',
+    '#btn-print:hover{background:#1250b0;}',
+    '#btn-close{background:#374151;color:#fff;}',
+    '#btn-close:hover{background:#4b5563;}',
+    '#edit-bar span{color:#9ca3af;font-size:12px;}',
+    'body.editing{padding-top:52px;}',
+    '[contenteditable]:focus{outline:2px solid #1570ef;outline-offset:2px;border-radius:3px;}',
 
     /* Footer logo */
     '.footer-logo{position:absolute;bottom:8mm;left:50%;transform:translateX(-50%);width:80px;opacity:.92;}',
 
     '@media print{',
-    '  body{margin:0;}',
+    '  #edit-bar{display:none!important;}',
+    '  body{padding-top:0!important;margin:0;}',
     '  .page{margin:0;box-shadow:none;}',
     '  @page{size:A4;margin:0;}',
     '}',
@@ -14546,11 +14588,14 @@ function dietGerarPDFNavegador(diet) {
   var logoTag = logo ? '<img class="hdr-logo" src="'+logo+'" alt="TEAMJE">' : '<div style="font-size:20px;font-weight:900;letter-spacing:2px;">TEAMJE</div>';
   var footerLogo = logo ? '<img class="footer-logo" src="'+logo+'" alt="TEAMJE">' : '';
 
-  // ── Header helper ────────────────────────────────────────────────
-  function hdr(num, nome, data, kcal) {
+  // ── Header helper — com CRN fixo na 1a página ─────────────────────
+  function hdr(num, nome, data, kcal, showCrn) {
+    var sub = 'DATA '+data+'&nbsp;&nbsp;&nbsp;&nbsp;'+kcal+'kcal';
+    var crnLine = showCrn ? '<div class="hdr-crn">CRN: '+CRN+'</div>' : '';
     return '<div class="hdr"><div>'
       +'<div class="hdr-title">PROTOCOLO DIETÉTICO '+num+': '+nome.toUpperCase()+'</div>'
-      +'<div class="hdr-sub">DATA '+data+'&nbsp;&nbsp;&nbsp;&nbsp;'+kcal+'kcal</div>'
+      +'<div class="hdr-sub">'+sub+'</div>'
+      +crnLine
       +'</div>'+logoTag+'</div>';
   }
 
@@ -14561,7 +14606,7 @@ function dietGerarPDFNavegador(diet) {
       return '<tr><td>'+item.categoria+'</td><td class="opcoes">'+item.opcoes+'</td></tr>';
     });
     if (refeicao.avontade) {
-      rows.push('<tr><td>À-vontade</td><td class="opcoes">'+refeicao.avontade+'</td></tr>');
+      rows.push('<tr><td>À vontade</td><td class="opcoes">'+refeicao.avontade+'</td></tr>');
     }
     return '<div class="pill-wrap"><span class="pill">'+refeicao.nome+'</span></div>'
       +'<table class="meal-table"><thead><tr><th>Categoria</th><th>Opções</th></tr></thead>'
@@ -14589,9 +14634,9 @@ function dietGerarPDFNavegador(diet) {
   // ── Split refeições em páginas (2 por página) ────────────────────
   var pages = [];
 
-  // Pág 1: header + refeições 1 e 2
+  // Pág 1: header (com CRN) + refeições 1 e 2
   var p1 = '<div class="page"><div class="content">'
-    + hdr(num, nome, data, kcal)
+    + hdr(num, nome, data, kcal, true)
     + '<div class="banner">REFEIÇÕES</div>'
     + passo
     + (refeicoes[0] ? mealTable(refeicoes[0]) : '')
@@ -14603,7 +14648,7 @@ function dietGerarPDFNavegador(diet) {
   var restMeals = refeicoes.slice(2);
   if (restMeals.length) {
     var p2 = '<div class="page"><div class="content">'
-      + hdr(num, nome, data, kcal);
+      + hdr(num, nome, data, kcal, false);
     restMeals.forEach(function(r, i) {
       p2 += (i > 0 ? '<div style="margin-top:12px;">' : '') + mealTable(r) + (i > 0 ? '</div>' : '');
     });
@@ -14613,7 +14658,7 @@ function dietGerarPDFNavegador(diet) {
 
   // Pág 3: Recomendações + Refeição Livre intro
   var p3 = '<div class="page"><div class="content">'
-    + hdr(num, nome, data, kcal)
+    + hdr(num, nome, data, kcal, false)
     + '<div class="banner">RECOMENDAÇÕES</div>'
     + '<p class="rec-title">CARDIO: SEMPRE BEM-VINDO!</p>'
     + '<p class="rec-text">'+recC+'</p>'
@@ -14633,7 +14678,7 @@ function dietGerarPDFNavegador(diet) {
 
   // Pág 4: Refeição Livre detalhada
   var p4 = '<div class="page"><div class="content">'
-    + hdr(num, nome, data, kcal)
+    + hdr(num, nome, data, kcal, false)
     + '<div class="livre-box"><h2>REFEIÇÃO LIVRE</h2><div class="livre-subtitle">CORRETAMENTE</div></div>'
     + '<p class="livre-bold">O QUE É UMA REFEIÇÃO LIVRE?</p>'
     + '<p class="livre-text">É uma ou duas refeições na semana em que você pode comer algo fora do seu plano alimentar, sem se preocupar com pesar alimentos, contar macros ou seguir uma estrutura rígida. Mas atenção: "livre" não é sinônimo de "descontrolado".</p>'
@@ -14648,7 +14693,7 @@ function dietGerarPDFNavegador(diet) {
 
   // Pág 5: Suplementos
   var p5 = '<div class="page"><div class="content">'
-    + hdr(num, nome, data, kcal)
+    + hdr(num, nome, data, kcal, false)
     + '<div class="banner">SUPLEMENTOS BÁSICOS</div>';
 
   var SUPLS_FALLBACK = [
@@ -14660,9 +14705,12 @@ function dietGerarPDFNavegador(diet) {
 
   var suplsToUse = supls.length ? supls : SUPLS_FALLBACK;
   suplsToUse.forEach(function(s) {
+    var sNome = typeof s === 'string' ? s : (s.nome || s);
+    var sHor  = typeof s === 'string' ? '' : (s.horario || '');
+    var sJust = typeof s === 'string' ? '' : (s.justificativa || '');
     p5 += '<div class="supl-item">'
-      +'<div class="supl-nome">'+s.nome+'<span class="supl-seta"> ➡ </span><span class="supl-horario">'+s.horario+'</span></div>'
-      +'<div class="supl-justif"><strong>Por quê?</strong> '+s.justificativa+'</div>'
+      +'<div class="supl-nome">'+sNome+(sHor?'<span class="supl-seta"> ➡ </span><span class="supl-horario">'+sHor+'</span>':'')+'</div>'
+      +(sJust?'<div class="supl-justif"><strong>Por quê?</strong> '+sJust+'</div>':'')
       +'</div>';
   });
   p5 += footerLogo + '</div></div>';
@@ -14670,7 +14718,7 @@ function dietGerarPDFNavegador(diet) {
 
   // Pág 6: Higiene do Sono
   var p6 = '<div class="page"><div class="content">'
-    + hdr(num, nome, data, kcal)
+    + hdr(num, nome, data, kcal, false)
     + '<div class="banner">HIGIENE DO SONO</div>'
     + '<p class="rec-text">Uma noite mal dormida não apenas prejudicará o crescimento muscular ou o emagrecimento, mas também estimulará o catabolismo, ou seja, a perda de massa muscular.</p>'
     + [
@@ -14689,28 +14737,31 @@ function dietGerarPDFNavegador(diet) {
     + footerLogo + '</div></div>';
   pages.push(p6);
 
-  // ── Abrir janela e imprimir ──────────────────────────────────────
-  var win = window.open('','_blank');
+  // ── Abrir janela com editor — clique em Imprimir para baixar PDF ─
+  var win = window.open('','_blank','width=900,height=800');
   if (!win) { showToast('Permita pop-ups neste site!','error'); return; }
 
-  win.document.write('<!DOCTYPE html><html lang="pt-BR" data-theme="dark"><head>'
+  var editorBar = '<div id="edit-bar">'
+    +'<button id="btn-print" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>'
+    +'<button id="btn-close" onclick="window.close()">✕ Fechar</button>'
+    +'<span>✏️ Clique em qualquer texto para editar antes de imprimir</span>'
+    +'</div>';
+
+  // Make each page content editable
+  var editablePages = pages.map(function(p) {
+    return p.replace('<div class="content">', '<div class="content" contenteditable="true">');
+  });
+
+  win.document.write('<!DOCTYPE html><html lang="pt-BR"><head>'
     +'<meta charset="UTF-8">'
     +'<title>Dieta '+num+' — '+nome+'</title>'
     +'<style>'+CSS+'</style>'
-    +'</head><body>'+pages.join('')+'</body></html>');
+    +'</head><body class="editing">'+editorBar+editablePages.join('')+'</body></html>');
   win.document.close();
 
-  // Download automático via print dialog
-  win.onload = function() {
-    setTimeout(function() {
-      win.focus();
-      win.print();
-      setTimeout(function(){ win.close(); }, 2000);
-    }, 600);
-  };
-
-  showToast('✅ PDF pronto! Escolha "Salvar como PDF" na janela de impressão.','success');
+  showToast('✅ Editor aberto! Edite o texto e clique "Imprimir / Salvar PDF".','success');
 }
+
 // ── Send via WhatsApp ─────────────────────────────────────────────────
 function dietSendWhatsApp() {
   if (!_dietStudent || !_dietLastDiet[_dietStudent.id]) return;
