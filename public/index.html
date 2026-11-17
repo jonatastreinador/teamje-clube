@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JE Clube Dashboard v84e</title>
+<title>JE Clube Dashboard v84f</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
@@ -14355,6 +14355,111 @@ function dietExportPDF() {
       showToast('Erro ao gerar PDF: ' + e.message, 'error');
     }
   }, 100);
+}
+
+function dietParseForPDF(diet) {
+  var text = (typeof diet === 'string') ? diet : (diet.rawText || '');
+  var nome   = (typeof diet === 'object' && diet.nome)   ? diet.nome   : 'Aluno';
+  var numero = (typeof diet === 'object' && diet.numero) ? diet.numero : '1';
+  var data   = (typeof diet === 'object' && diet.data)   ? diet.data   : new Date().toLocaleDateString('pt-BR');
+  var kc     = text.match(/(\d{3,4})\s*kcal/i);
+  var kcal   = kc ? kc[1] : ((typeof diet === 'object' && diet.kcal) ? diet.kcal : '2000');
+
+  // ── Parse refeições ──────────────────────────────────────────────
+  // Splits on meal headers like "CAFÉ DA MANHÃ", "ALMOÇO", "JANTAR", etc.
+  var refeicoes = [];
+  var mealHeaderRe = /(?:^|\n)((?:CAF[ÉE]\s*DA\s*MANH[ÃA]|LANCHE\s*(?:DA\s*(?:MANH[ÃA]|TARDE)|PRÉ-TREINO|PÓS-TREINO)?|ALMO[ÇC]O|JANTAR|CEIA|PR[ÉE]-TREINO|P[ÓO]S-TREINO)[^\n]*)/gi;
+  var matches = [];
+  var m;
+  while ((m = mealHeaderRe.exec(text)) !== null) {
+    matches.push({ name: m[1].trim(), index: m.index + (m[0].indexOf(m[1])) });
+  }
+  for (var i = 0; i < matches.length; i++) {
+    var mealName = matches[i].name;
+    var mealStart = matches[i].index + mealName.length;
+    var mealEnd = (i + 1 < matches.length) ? matches[i+1].index : text.length;
+    var mealText = text.slice(mealStart, mealEnd).trim();
+
+    // Parse lines: "Categoria: opções" or "- Categoria: opções" or "* Categoria: opções"
+    var itens = [];
+    var avontade = '';
+    var lines = mealText.split('\n');
+    lines.forEach(function(line) {
+      line = line.replace(/^[\s\-\*•]+/, '').trim();
+      if (!line) return;
+      // Skip lines that look like kcal totals or macros
+      if (/^\d+\s*kcal/i.test(line)) return;
+      if (/^(calorias|macros|proteína|carboidrato|gordura):/i.test(line)) return;
+      // "À vontade" line
+      if (/à[\s-]*vontade/i.test(line)) {
+        var av = line.replace(/^à[\s-]*vontade[:\s]*/i, '').trim();
+        if (av) avontade = av;
+        return;
+      }
+      // Try "Categoria: opções"
+      var colonIdx = line.indexOf(':');
+      if (colonIdx > 0 && colonIdx < 35) {
+        var cat = line.slice(0, colonIdx).trim();
+        var ops = line.slice(colonIdx + 1).trim();
+        if (cat && ops) {
+          itens.push({ categoria: cat, opcoes: ops });
+          return;
+        }
+      }
+      // Fallback: treat whole line as an option under "Alimento"
+      if (line.length > 3 && line.length < 200) {
+        itens.push({ categoria: 'Alimento', opcoes: line });
+      }
+    });
+
+    if (itens.length || avontade) {
+      refeicoes.push({ nome: mealName, itens: itens, avontade: avontade });
+    }
+  }
+
+  // ── Parse recomendações ──────────────────────────────────────────
+  var rec_cardio = '';
+  var rec_agua = '';
+  var rec_musculacao = '';
+  var rec_dicas = [];
+
+  var recBlock = text.match(/RECOMENDA[ÇC][ÕO]ES?([\s\S]*?)(?:SUPLEMENTA[ÇC][ÃA]O|SUPLEMENTOS|$)/i);
+  if (recBlock) {
+    var rb = recBlock[1];
+    var cardioM = rb.match(/(?:CARDIO|AERÓBICO)[^\n]*\n([\s\S]*?)(?=\n[A-ZÁÉÍÓÚÂÊÔÃÕ]{3}|\n[-*•]?\s*[A-ZÁÉÍÓÚÂÊÔÃÕ]{4}|$)/i);
+    if (cardioM) rec_cardio = cardioM[1].replace(/^[\s\-\*•]+/gm,'').replace(/\n+/g,' ').trim();
+    var aguaM = rb.match(/(?:ÁGUA|HIDRATA[ÇC][ÃA]O)[^\n]*\n([\s\S]*?)(?=\n[A-ZÁÉÍÓÚÂÊÔÃÕ]{3}|\n[-*•]?\s*[A-ZÁÉÍÓÚÂÊÔÃÕ]{4}|$)/i);
+    if (aguaM) rec_agua = aguaM[1].replace(/^[\s\-\*•]+/gm,'').replace(/\n+/g,' ').trim();
+    var muscM = rb.match(/(?:MUSCULA[ÇC][ÃA]O|TREINO)[^\n]*\n([\s\S]*?)(?=\n[A-ZÁÉÍÓÚÂÊÔÃÕ]{3}|\n[-*•]?\s*[A-ZÁÉÍÓÚÂÊÔÃÕ]{4}|$)/i);
+    if (muscM) rec_musculacao = muscM[1].replace(/^[\s\-\*•]+/gm,'').replace(/\n+/g,' ').trim();
+    // Extra tips
+    var dicasLines = rb.split('\n').filter(function(l) {
+      l = l.trim();
+      return l && /^[-\*•]/.test(l) && !/CARDIO|ÁGUA|MUSCULA/i.test(l);
+    });
+    rec_dicas = dicasLines.map(function(l){ return l.replace(/^[\s\-\*•]+/,'').trim(); }).filter(Boolean).slice(0,6);
+  }
+
+  // ── Parse suplementos ────────────────────────────────────────────
+  var suplementos = [];
+  var suplBlock = text.match(/SUPLEMENTA[ÇC][ÃA]O|SUPLEMENTOS([\s\S]*?)(?=\n[A-ZÁÉÍÓÚÂÊÔÃÕ]{5}|\n#{1,3}\s|$)/i);
+  if (suplBlock) {
+    var sb = suplBlock[1] || '';
+    sb.split('\n').forEach(function(line) {
+      line = line.replace(/^[\s\-\*•]+/, '').trim();
+      if (line && line.length > 3) suplementos.push(line);
+    });
+  }
+
+  return {
+    nome: nome, numero: numero, data: data, kcal: kcal,
+    refeicoes: refeicoes,
+    suplementos: suplementos,
+    rec_cardio: rec_cardio,
+    rec_agua: rec_agua,
+    rec_musculacao: rec_musculacao,
+    rec_dicas: rec_dicas
+  };
 }
 
 function dietGerarPDFNavegador(diet) {
