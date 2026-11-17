@@ -14135,7 +14135,19 @@ DICAS: [3-5 dicas específicas para o objetivo do aluno]
 4. Se dados estiverem faltando, informe e peça, mas gere a melhor estimativa possível
 5. Mencione sempre que a dieta é um plano alimentar e não substitui consulta presencial
 6. Para exames: seja claro sobre o que está alterado e o impacto nutricional
-7. Use nomes em português dos alimentos comuns no Brasil`;
+7. Use nomes em português dos alimentos comuns no Brasil
+
+## REGRA ABSOLUTA DE PRECISÃO CALÓRICA — NUNCA VIOLE
+Quando o treinador solicitar uma dieta de X kcal (ex: 2500kcal, 3000kcal, 4600kcal), a soma REAL de todos os alimentos com suas gramas especificadas DEVE ser EXATAMENTE esse valor (tolerância máxima: ±30kcal).
+
+**Como calcular:**
+- Proteína: 4 kcal/g | Carboidrato: 4 kcal/g | Gordura: 9 kcal/g
+- Calcule cada alimento individualmente pelo peso especificado
+- Some tudo (todas as refeições, todas as opções de cada categoria)
+- Ajuste as quantidades até bater exatamente o total pedido
+- NÃO arredonde para cima ou para baixo — ajuste os gramas dos alimentos
+
+**Verificação obrigatória:** antes de entregar a dieta, faça o cálculo mental completo da soma e confirme que bate com o valor pedido. Se não bater, ajuste e recalcule antes de responder.`;
 
 function dietCallAPI(userMsg, fileCtx) {
   var s = _dietStudent;
@@ -14528,7 +14540,7 @@ function dietGerarPDFNavegador(diet) {
     'select.tb-select { background:#374151; color:#e2e8f0; border:1px solid rgba(255,255,255,.12); border-radius:5px; padding:5px 8px; font-size:12px; cursor:pointer; }',
     'input.tb-color { width:30px; height:28px; border:none; border-radius:4px; cursor:pointer; padding:2px; background:#374151; }',
     'body { padding-top:62px; }',
-    '.page { width:794px; min-height:1123px; margin:20px auto; background:#fff; padding:52px 52px 70px; position:relative; box-shadow:0 4px 24px rgba(0,0,0,.12); }',
+    '.page { width:210mm; min-height:297mm; margin:20px auto; background:#fff; padding:14mm 16mm 20mm; position:relative; box-shadow:0 4px 24px rgba(0,0,0,.12); box-sizing:border-box; }',
     '.page::before { content:""; position:absolute; inset:0; background-image:url("'+logoSrc+'"); background-repeat:no-repeat; background-position:center; background-size:60%; opacity:0.04; pointer-events:none; z-index:0; }',
     '.page > * { position:relative; z-index:1; }',
     '.hdr { display:flex; justify-content:space-between; align-items:flex-start; padding-bottom:10px; border-bottom:2.5px solid #111; margin-bottom:20px; }',
@@ -14569,7 +14581,7 @@ function dietGerarPDFNavegador(diet) {
     '@media print {',
     '  #toolbar { display:none!important; }',
     '  body { padding-top:0!important; background:#fff; }',
-    '  .page { margin:0!important; box-shadow:none!important; width:210mm!important; min-height:297mm; padding:14mm 16mm 20mm!important; break-after:page; page-break-after:always; }',
+    '  .page { margin:0!important; box-shadow:none!important; break-after:page; page-break-after:always; }',
     '  .page:last-child { break-after:avoid; page-break-after:avoid; }',
     '  .meal-block { break-inside:avoid; page-break-inside:avoid; }',
     '  .meal-title { break-after:avoid; page-break-after:avoid; }',
@@ -14587,7 +14599,7 @@ function dietGerarPDFNavegador(diet) {
   function pageHdr(showCrn) {
     return '<div class="hdr">'
       +'<div>'
-        +'<div class="hdr-title">PROTOCOLO DIE&Eacute;TICO '+num+': '+nome.toUpperCase()+'</div>'
+        +'<div class="hdr-title">PROTOCOLO DIET&Eacute;TICO '+num+': '+nome.toUpperCase()+'</div>'
         +'<div class="hdr-sub">DATA '+data+'&nbsp;&nbsp;&nbsp;&nbsp;'+kcal+' KCAL</div>'
         +(showCrn ? '<div class="hdr-crn">CRN: '+CRN+'</div>' : '')
       +'</div>'
