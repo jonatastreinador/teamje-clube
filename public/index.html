@@ -14148,14 +14148,31 @@ DICAS: [3-5 dicas específicas para o objetivo do aluno]
 6. Para exames: seja claro sobre o que está alterado e o impacto nutricional
 7. Use nomes em português dos alimentos comuns no Brasil
 
-## REGRA DE REPLICAÇÃO FIEL — quando pedirem para "refazer" ou "ajustar" uma dieta existente
-Quando o treinador enviar uma dieta existente (como PDF, imagem ou texto) e pedir para "refazer com X kcal" ou "alterar para ganho de massa" ou "manter os mesmos alimentos mas ajustar":
-- **LEIA o arquivo anexado completamente** — extraia cada alimento, quantidade e refeição
-- **Mantenha TODOS os mesmos alimentos** nas mesmas refeições — apenas ajuste as quantidades para atingir as novas calorias
-- **Mantenha a mesma estrutura** de refeições (mesmo número, mesmos horários, mesma ordem)
-- **NÃO substitua alimentos** sem autorização explícita
-- **NÃO faça análise crítica** dos dados do aluno (IMC, TMB, etc.) — apenas execute o pedido
-- **NÃO pergunte** nada — gere a dieta diretamente
+## REGRA DE REPLICAÇÃO FIEL — LEI ABSOLUTA quando houver arquivo anexado
+
+Sempre que o treinador enviar um arquivo (PDF ou imagem de dieta), esta regra tem PRIORIDADE MÁXIMA sobre qualquer outra instrução:
+
+### PASSO 1 — LEIA O ARQUIVO COMPLETAMENTE
+Antes de gerar qualquer coisa, extraia do arquivo:
+1. **Número exato de refeições** e os nomes de cada uma (ex: "Café da Manhã", "Lanche da Manhã", "Almoço", "Lanche da Tarde Pré-Treino", "Jantar", "Ceia", "Vitamina") — use os nomes EXATOS do arquivo
+2. **Todos os alimentos de cada refeição** com suas quantidades em gramas
+3. **Suplementos** listados
+4. **Qualquer seção extra** (vitamina hipercalórica, opção extra, etc.)
+
+### PASSO 2 — REPLIQUE A ESTRUTURA DO ARQUIVO COM ZERO ALTERAÇÕES
+- Se o arquivo tem 3 refeições → a nova dieta tem 3 refeições com os mesmos nomes
+- Se o arquivo tem 6 refeições → a nova dieta tem 6 refeições com os mesmos nomes
+- Se o arquivo tem 8 refeições → a nova dieta tem 8 refeições com os mesmos nomes
+- **A estrutura do arquivo é a lei** — NUNCA adicione ou remova refeições sem autorização
+- **Os nomes das refeições devem ser idênticos** ao arquivo (se estava "LANCHE DA TARDE PRÉ-TREINO" → mantenha esse nome exato)
+
+### PASSO 3 — APLIQUE APENAS A ALTERAÇÃO PEDIDA
+- Se o treinador pediu "aumentar para 3000kcal" → mantenha todos os alimentos, apenas ajuste as quantidades
+- Se o treinador pediu "substituir frango por peixe" → troque só o frango, mantenha todo o resto
+- Se o treinador pediu "adicionar uma vitamina" → adicione só a vitamina, mantenha o restante idêntico
+- **NÃO adicione categorias, refeições ou alimentos não pedidos**
+- **NÃO faça análise crítica** dos dados (IMC, TMB, etc.)
+- **NÃO pergunte** nada — execute diretamente
 
 ## REGRA DE SUPLEMENTAÇÃO — baseada no objetivo individual
 Os suplementos da dieta DEVEM ser escolhidos com base no objetivo específico do aluno:
@@ -14315,9 +14332,19 @@ function dietSystemPrompt(s, msg, fc) {
     +(s.objetivo?'Objetivo: '+s.objetivo+'\n':'')
     +(s.plano  ?'Plano: '+s.plano+'\n':'')
     +(s.obs    ?'Anamnese: '+s.obs+'\n':'')
-    +(fc       ?'\n📎 ARQUIVO ANEXADO: "'+fc.name+'" — O arquivo está incluído acima como '+( (fc.mime||'').startsWith('image/') ? 'imagem' : 'documento PDF' )+'. LEIA o conteúdo completo: extraia todos os alimentos, quantidades e refeições antes de responder.\n':'' )
+    +(fc       ? '\n\n🚨 ARQUIVO ANEXADO — REGRA DE REPLICAÇÃO FIEL ATIVA 🚨\n'
+               +'Arquivo: "'+fc.name+'" ('+( (fc.mime||'').startsWith('image/') ? 'imagem' : 'documento PDF' )+')\n'
+               +'ANTES de responder, execute obrigatoriamente:\n'
+               +'1. Leia o arquivo COMPLETO\n'
+               +'2. Liste mentalmente TODAS as refeições com seus nomes exatos\n'
+               +'3. Liste TODOS os alimentos de cada refeição com as quantidades\n'
+               +'4. A nova dieta DEVE ter EXATAMENTE as mesmas refeições com os MESMOS NOMES\n'
+               +'5. Aplique SOMENTE a alteração solicitada abaixo — não adicione nem remova nada mais\n'
+               : '' )
     +'\n## PEDIDO DO TREINADOR:\n'+msg
-    +'\n\n⚠️ EXECUTE IMEDIATAMENTE. Se gerar dieta completa, use EXATAMENTE o formato PROTOCOLO DIETÉTICO. Não faça análises, não pergunte nada, não adicione disclaimers — apenas entregue a dieta.';
+    +'\n\n⚠️ EXECUTE IMEDIATAMENTE. '
+    +(fc ? 'REPLIQUE A ESTRUTURA DO ARQUIVO — mesmas refeições, mesmos alimentos, apenas a alteração pedida. ' : '')
+    +'Use EXATAMENTE o formato PROTOCOLO DIETÉTICO. Não faça análises, não pergunte nada, não adicione disclaimers — apenas entregue a dieta.';
 }
 
 // ── Parse diet from text ──────────────────────────────────────────────
