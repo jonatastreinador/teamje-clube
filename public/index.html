@@ -14105,7 +14105,7 @@ Gordura: [lista]
 Fruta: [lista]
 À-vontade: [legumes]
 
-LANCHE DA TARDE
+LANCHE DA TARDE (PRÉ-TREINO)
 Carboidrato: [lista]
 Proteína: [lista]
 Gordura: [lista]
@@ -14117,6 +14117,17 @@ Proteína: [lista]
 Gordura: [lista]
 Fruta: [lista]
 À-vontade: [legumes]
+
+CEIA
+Carboidrato: [lista]
+Proteína: [lista]
+Gordura: [lista]
+Fruta: [lista]
+
+VITAMINA HIPERCALÓRICA (CONSUMIR 1X AO DIA)
+- [ingrediente 1 Xg/ml]
+- [ingrediente 2 Xg/ml]
+- [ingrediente 3 Xg/ml]
 
 SUPLEMENTOS:
 [Nome do suplemento] [dose] [horário]: [justificativa em 1 linha]
@@ -14145,6 +14156,15 @@ Quando o treinador enviar uma dieta existente (como PDF, imagem ou texto) e pedi
 - **NÃO substitua alimentos** sem autorização explícita
 - **NÃO faça análise crítica** dos dados do aluno (IMC, TMB, etc.) — apenas execute o pedido
 - **NÃO pergunte** nada — gere a dieta diretamente
+
+## REGRA DE SUPLEMENTAÇÃO — baseada no objetivo individual
+Os suplementos da dieta DEVEM ser escolhidos com base no objetivo específico do aluno:
+- **Hipertrofia:** creatina monohidratada, whey protein isolado, ZMA, magnésio bisglicinato
+- **Emagrecimento:** cafeína anidra, L-carnitina, ômega-3, vitamina D3+K2, chá verde
+- **Recomposição:** creatina, whey isolado, ômega-3, vitamina D3+K2, multivitamínico
+- **Saúde/performance:** ômega-3, vitamina D3+K2, multivitamínico, magnésio, complexo B
+- Para cada suplemento, informe: nome, dose, horário e justificativa em 1 linha
+- NÃO use uma lista genérica ou fixa — personalize sempre ao objetivo do aluno
 
 ## REGRA DE COMPORTAMENTO — execução direta
 Quando o treinador fizer um pedido claro (gerar dieta, ajustar, refazer), execute IMEDIATAMENTE sem:
@@ -14451,7 +14471,7 @@ function dietGerarPDFNavegador(diet) {
   var kcal  = kcalM ? kcalM[1] : (diet.kcal || '2000');
 
   // ── Regexes ──────────────────────────────────────────────────────
-  var MEAL_RE  = /^(CAF[EÉ]\s*DA\s*MANH[ÃA]|LANCHE\s*(?:DA\s*(?:MANH[ÃA]|TARDE)|PR[EÉ]-TREINO|P[OÓ]S-TREINO|NOTURNO)?|ALMO[CÇ]O|JANTAR|CEIA|PR[EÉ]-TREINO|P[OÓ]S-TREINO)\s*$/i;
+  var MEAL_RE  = /^(CAF[EÉ]\s*DA\s*MANH[ÃA]|LANCHE\s*(?:DA\s*(?:MANH[ÃA]|TARDE)|PR[EÉ]-TREINO|P[OÓ]S-TREINO|NOTURNO)?(?:\s*\([^)]*\))?|ALMO[CÇ]O|JANTAR|CEIA|PR[EÉ]-TREINO|P[OÓ]S-TREINO|VITAMINA\s+HIPERCAL[OÓ]RICA(?:\s*\([^)]*\))?)\s*$/i;
   var SUPL_RE  = /^(SUPLEMENTA[CÇ][AÃ]O|SUPLEMENTOS?\b)/i;
   var RECRM_RE = /^(RECOMENDA[CÇ][OÕ]ES?|HIGIENE\s*DO\s*SONO|CARDIO\b|[ÁA]GUA\b|MUSCULA[CÇ][AÃ]O\b|RESUMO\s*NUTRICIONAL|MACRONUTRIENTES|OBSERVA[CÇ][OÕ]ES?|DICAS?\b|ESTRAT[EÉ]GIA)/i;
   var CAT_RE   = /^(Carboidrato|Prote[ií]na|Gordura|Fruta|[Àà]\s*[Vv]ontade|Vegetal|Legume|Salada|Bebida|Lanche|Alimento|Suplemento|Tempero|Condimento)/i;
@@ -14557,18 +14577,7 @@ function dietGerarPDFNavegador(diet) {
   });
 
   if (!suplHtmlFromText) {
-    var SUPLS_DEFAULT = [
-      {n:'ÔMEGA 3 1000MG',     h:'1 dose/dia junto à primeira refeição', j:'Essencial para saúde cardiovascular, reduz inflamações e auxilia na recuperação muscular e regulação hormonal.'},
-      {n:'VITAMINA D 2.000UI', h:'1 dose/dia junto à primeira refeição', j:'Essencial para saúde óssea, imunidade e equilíbrio hormonal. Auxilia na força muscular.'},
-      {n:'MULTIVITAMÍNICO',    h:'1 dose/dia junto à primeira refeição', j:'Repõe vitaminas e minerais, mantém o metabolismo funcionando e otimiza a recuperação.'},
-      {n:'COMPLEXO B',         h:'1 dose/dia junto à primeira refeição', j:'Fundamental para metabolismo energético, disposição e síntese proteica.'},
-    ];
-    suplHtmlFromText = SUPLS_DEFAULT.map(function(s){
-      return '<div class="supl-item">'
-        +'<div class="supl-nome">'+s.n+' <span class="supl-hor">&#10145; '+s.h+'</span></div>'
-        +'<div class="supl-just"><strong>Por qu&ecirc;?</strong> '+s.j+'</div>'
-        +'</div>';
-    }).join('');
+    suplHtmlFromText = '<p class="para" style="color:#888;font-style:italic;">Nenhum suplemento foi especificado pela IA. Peça ao chat: "Liste os suplementos ideais para [nome] com base no objetivo [objetivo]".</p>';
   }
 
   // ── CSS ──────────────────────────────────────────────────────────
@@ -14600,6 +14609,9 @@ function dietGerarPDFNavegador(diet) {
     '.hdr-crn { font-size:12px; font-weight:700; color:#111; margin-top:1px; }',
     '.hdr-logo { width:72px; height:auto; }',
     '.banner { text-align:center; font-size:13px; font-weight:700; letter-spacing:.35em; color:#666; margin:16px 0 10px; text-transform:uppercase; }',
+    '.supl-capa { background:#111; color:#fff; padding:36px 24px 32px; text-align:center; border-radius:8px; margin:0 0 24px; -webkit-print-color-adjust:exact; print-color-adjust:exact; }',
+    '.supl-capa-title { font-size:36px; font-weight:900; letter-spacing:.25em; text-transform:uppercase; line-height:1; }',
+    '.supl-capa-sub { font-size:11px; letter-spacing:.45em; opacity:.6; margin-top:8px; text-transform:uppercase; }',
     '.sec-title { font-size:13px; font-weight:900; text-transform:uppercase; letter-spacing:.05em; margin:16px 0 6px; color:#111; border-bottom:1px solid #eee; padding-bottom:4px; }',
     '.passo { border:1px solid #d0d5dd; border-radius:6px; padding:9px 14px; margin-bottom:14px; text-align:center; }',
     '.passo-t { font-size:11px; font-weight:900; margin-bottom:3px; }',
@@ -14638,6 +14650,7 @@ function dietGerarPDFNavegador(diet) {
     '  .meal-block { break-inside:avoid; page-break-inside:avoid; }',
     '  .meal-title { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; background:#111!important; color:#fff!important; break-after:avoid; page-break-after:avoid; }',
     '  .livre-capa { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; background:#111!important; color:#fff!important; }',
+    '  .supl-capa { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; background:#111!important; color:#fff!important; }',
     '  .passo { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; break-inside:avoid; page-break-inside:avoid; }',
     '  .supl-item { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; background:#f8faff!important; break-inside:avoid; page-break-inside:avoid; }',
     '  .sono-item { break-inside:avoid; page-break-inside:avoid; }',
@@ -14699,7 +14712,7 @@ function dietGerarPDFNavegador(diet) {
 
   var page3 = '<div class="page" contenteditable="true">'
     + pageHdr(false)
-    + '<div class="banner">SUPLEMENTOS</div>'
+    + '<div class="supl-capa"><div class="supl-capa-title">SUPLEMENTOS</div><div class="supl-capa-sub">PROTOCOLO DE SUPLEMENTA&Ccedil;&Atilde;O</div></div>'
     + suplHtmlFromText
     + footerLg
     + '</div>';
