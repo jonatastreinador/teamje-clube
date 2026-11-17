@@ -14683,7 +14683,11 @@ function dietGerarPDFNavegador(diet) {
     '  .sono-item { break-inside:avoid; page-break-inside:avoid; }',
     '  .hdr { break-after:avoid; page-break-after:avoid; }',
     '  .page::before { -webkit-print-color-adjust:exact!important; print-color-adjust:exact!important; display:block!important; opacity:0.04!important; }',
-    '  @page { size:A4; margin:0; }',
+    '  @page { size:A4 portrait; margin:0mm !important; }',
+    '  @page :first { margin:0mm !important; }',
+    '  @page :left { margin:0mm !important; }',
+    '  @page :right { margin:0mm !important; }',
+    '  html, body { margin:0 !important; padding:0 !important; }',
     '}',
   ].join('\n');
 
@@ -14792,7 +14796,7 @@ function dietGerarPDFNavegador(diet) {
 
   var toolbar = '<div id="toolbar">'
     // ── Ações principais
-    +'<button id="btn-print" onclick="window.print()">&#128424; Imprimir / PDF</button>'
+    +'<button id="btn-print" onclick="dietPrint()">&#128424; Salvar PDF</button>'
     +'<button id="btn-close" onclick="window.close()">&#10005; Fechar</button>'
     +'<div class="tb-sep"></div>'
     // ── Desfazer / Refazer
@@ -14848,6 +14852,20 @@ function dietGerarPDFNavegador(diet) {
     +'</head><body>'
     +toolbar
     +page1+page2+page3+page4+page5
+    +'<script>'
+    +'function dietPrint(){'
+    +'  var tip=document.getElementById("print-tip");'
+    +'  if(tip){tip.style.display="flex";}'
+    +'  setTimeout(function(){window.print();},400);'
+    +'}'
+    +'window.addEventListener("afterprint",function(){'
+    +'  var tip=document.getElementById("print-tip");'
+    +'  if(tip){tip.style.display="none";}'
+    +'});'
+    +'<\/script>'
+    +'<div id="print-tip" style="display:none;position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#1d2939;color:#fff;padding:12px 20px;border-radius:10px;font-family:Inter,sans-serif;font-size:13px;font-weight:600;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,.5);gap:10px;align-items:center;max-width:420px;text-align:center;">'
+    +'&#9888;&#65039; No di&aacute;logo de impress&atilde;o: <strong>Mais configura&ccedil;&otilde;es &rarr; Margens = Nenhuma</strong>'
+    +'</div>'
     +'</body></html>');
   win.document.close();
 
