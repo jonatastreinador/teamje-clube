@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JE Clube Dashboard v84h</title>
+<title>JE Clube Dashboard v86a</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
@@ -4839,13 +4839,7 @@ input[type="checkbox"] {
                   </div>
                 </div>
 
-                <!-- 14 SLOTS DE FOTOS -->
-                <div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:14px;">
-                  <div style="font-size:11px;font-weight:700;color:var(--blue3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px;">📸 Fotos dos Testes (14 slots)</div>
-                  <div id="post-slots-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;">
-                    <!-- JS vai preencher aqui -->
-                  </div>
-                </div>
+
 
                 <!-- STATUS DA IA -->
                 <div id="post-ia-status" style="display:none;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:14px;">
@@ -14362,108 +14356,126 @@ function dietGerarPDFNavegador(diet) {
   var kcalM = text.match(/(\d{3,4})\s*kcal/i);
   var kcal  = kcalM ? kcalM[1] : (diet.kcal || '2000');
 
-  // ── Converte rawText → HTML de dieta bem formatado ───────────────
-  // Cada linha é analisada e convertida para o elemento visual correto
+  // ── Regexes ──────────────────────────────────────────────────────
+  var MEAL_RE  = /^(CAF[EÉ]\s*DA\s*MANH[ÃA]|LANCHE\s*(?:DA\s*(?:MANH[ÃA]|TARDE)|PR[EÉ]-TREINO|P[OÓ]S-TREINO|NOTURNO)?|ALMO[CÇ]O|JANTAR|CEIA|PR[EÉ]-TREINO|P[OÓ]S-TREINO)\s*$/i;
+  var SUPL_RE  = /^(SUPLEMENTA[CÇ][AÃ]O|SUPLEMENTOS?\b)/i;
+  var RECRM_RE = /^(RECOMENDA[CÇ][OÕ]ES?|HIGIENE\s*DO\s*SONO|CARDIO\b|[ÁA]GUA\b|MUSCULA[CÇ][AÃ]O\b|RESUMO\s*NUTRICIONAL|MACRONUTRIENTES|OBSERVA[CÇ][OÕ]ES?|DICAS?\b|ESTRAT[EÉ]GIA)/i;
+  var CAT_RE   = /^(Carboidrato|Prote[ií]na|Gordura|Fruta|[Àà]\s*[Vv]ontade|Vegetal|Legume|Salada|Bebida|Lanche|Alimento|Suplemento|Tempero|Condimento)/i;
 
-  var MEAL_NAMES = /^(CAF[EÉ]\s*DA\s*MANH[ÃA]|LANCHE\s*(?:DA\s*(?:MANH[ÃA]|TARDE)|PR[EÉ]-TREINO|P[OÓ]S-TREINO)?|ALMO[CÇ]O|JANTAR|CEIA|PR[EÉ]-TREINO|P[OÓ]S-TREINO)\s*$/i;
-  var SEC_NAMES  = /^(RECOMENDA[CÇ][OÕ]ES?|SUPLEMENTA[CÇ][AÃ]O|SUPLEMENTOS\b|HIGIENE\s*DO\s*SONO|REFEI[CÇ][AÃ]O\s*LIVRE|RESUMO\s*NUTRICIONAL|MACRONUTRIENTES|OBSERVA[CÇ][OÕ]ES?|DICAS?\b|ESTRAT[EÉ]GIA|CARDIO\b|[ÁA]GUA\b|MUSCULA[CÇ][AÃ]O\b)/i;
-  var CATEGORIES = /^(Carboidrato|Prote[ií]na|Gordura|Fruta|[Àà]\s*[Vv]ontade|Vegetal|Legume|Salada|Bebida|Lanche|Alimento|Suplemento)/i;
-
-  // State machine to build HTML
-  var bodyHtml = '';
-  var inMealTable = false;    // currently inside a refeicao table
-  var inSection   = false;    // inside RECOMENDAÇÕES / SUPLEMENTAÇÃO etc.
-
-  function closeMealTable() {
-    if (inMealTable) { bodyHtml += '</tbody></table>'; inMealTable = false; }
-  }
+  // ── State machine parse ──────────────────────────────────────────
+  var mealBlocks = [];
+  var suplLines  = [];
+  var recLines   = [];
+  var currentMeal = null;
+  var mode = 'intro';
+  var firstMealFound = false;
 
   var lines = text.split('\n');
   lines.forEach(function(raw) {
     var line = raw.trim();
-    if (!line) {
-      if (inMealTable) { /* skip empty lines inside table */ }
-      return;
-    }
-
-    // Strip markdown bold
-    var display = line.replace(/\*\*/g,'').replace(/\*/g,'').replace(/^#+\s*/,'').trim();
-
-    // ── MEAL HEADER (CAFÉ DA MANHÃ, ALMOÇO…) ──────────────────────
-    if (MEAL_NAMES.test(display)) {
-      closeMealTable();
-      inSection = false;
-      bodyHtml += '<div class="meal-title">'+display+'</div>'
-        +'<table class="meal-table"><thead><tr><th>Categoria</th><th>Op&ccedil;&otilde;es</th></tr></thead><tbody>';
-      inMealTable = true;
-      return;
-    }
-
-    // ── SECTION HEADERS (RECOMENDAÇÕES, SUPLEMENTAÇÃO…) ──────────
-    if (SEC_NAMES.test(display)) {
-      closeMealTable();
-      inSection = true;
-      bodyHtml += '<div class="sec-title">'+display+'</div>';
-      return;
-    }
-
-    // ── CATEGORY ROW inside a meal table ─────────────────────────
-    if (inMealTable) {
-      // Try "Categoria: opções"
-      var ci = display.indexOf(':');
-      if (ci > 0 && ci <= 40 && CATEGORIES.test(display)) {
-        var cat = display.slice(0, ci).trim();
-        var ops = display.slice(ci+1).trim();
-        bodyHtml += '<tr><td class="cat">'+cat+'</td><td class="ops">'+ops+'</td></tr>';
-        return;
-      }
-      // Skip kcal/macro lines
-      if (/^\d+\s*kcal/i.test(display)) return;
-      if (/^\|[-| ]+\|/.test(display)) return;
-      if (/^(Macronutriente|Macros|Prote[ií]na total|Carboidrato total|\|)/i.test(display)) return;
-      // Check if this looks like a supplement/section header mid-meal — close table
-      if (/^(SUPLEMENTA|SUPLEMENTOS|RECOMENDA|RESUMO|CARDIO:|[ÁA]GUA:|MUSCULA)/i.test(display)) {
-        closeMealTable();
-        inSection = true;
-        bodyHtml += '<div class="sec-title">'+display.replace(/:$/,'')+'</div>';
-        return;
-      }
-      // Otherwise add as generic row
-      if (display.length > 3) {
-        var ci2 = display.indexOf(':');
-        if (ci2 > 0 && ci2 <= 40) {
-          bodyHtml += '<tr><td class="cat">'+display.slice(0,ci2).trim()+'</td><td class="ops">'+display.slice(ci2+1).trim()+'</td></tr>';
-        } else {
-          bodyHtml += '<tr><td class="cat" colspan="2">'+display+'</td></tr>';
-        }
-      }
-      return;
-    }
-
-    // ── LINES OUTSIDE MEALS (recommendations, supplements…) ──────
     if (!line) return;
-    // Skip markdown table separators
-    if (/^\|[-| ]+\|/.test(display)) return;
-    if (/^\|?(Macronutriente|Quantidade|%)/i.test(display)) return;
-    // Bullet / numbered item
-    if (/^[-*•►\d\.]/.test(raw.trim())) {
-      display = display.replace(/^[-*•►\d\.]+\s*/,'');
-      bodyHtml += '<p class="bullet">'+display+'</p>';
+    var d = line.replace(/\*\*/g,'').replace(/\*/g,'').replace(/^#+\s*/,'').trim();
+
+    if (!firstMealFound) {
+      if (MEAL_RE.test(d)) { firstMealFound = true; }
+      else { return; }
+    }
+
+    if (MEAL_RE.test(d)) {
+      currentMeal = {nome: d.toUpperCase(), rows: []};
+      mealBlocks.push(currentMeal);
+      mode = 'meal';
       return;
     }
-    // Markdown table row (| col | col |)
-    if (/^\|.+\|$/.test(display)) {
-      var cols = display.split('|').filter(function(c){ return c.trim(); });
-      if (cols.length >= 2) {
-        bodyHtml += '<p class="para"><strong>'+cols[0].replace(/\*\*/g,'').trim()+':</strong> '+cols.slice(1).join(' — ').trim()+'</p>';
+    if (SUPL_RE.test(d)) {
+      currentMeal = null;
+      mode = 'supl';
+      return;
+    }
+    if (RECRM_RE.test(d)) {
+      currentMeal = null;
+      mode = 'rec';
+      recLines.push({type:'sec', text: d});
+      return;
+    }
+    if (mode==='meal' && /^(SUPLEMENTA|SUPLEMENTOS|RECOMENDA|RESUMO|CARDIO:|[ÁA]GUA:|MUSCULA|HIGIENE)/i.test(d)) {
+      currentMeal = null;
+      if (/^(SUPLEMENTA|SUPLEMENTOS)/i.test(d)) { mode='supl'; }
+      else { mode='rec'; recLines.push({type:'sec', text:d.replace(/:$/,'')}); }
+      return;
+    }
+
+    if (mode === 'meal' && currentMeal) {
+      if (/^\d+\s*kcal/i.test(d)) return;
+      if (/^\|[-| ]+\|/.test(d)) return;
+      if (/^(Macronutriente|Macros|Prote[ií]na total|Carboidrato total|\|)/i.test(d)) return;
+      var ci = d.indexOf(':');
+      if (ci > 0 && ci <= 45 && CAT_RE.test(d)) {
+        currentMeal.rows.push({cat: d.slice(0,ci).trim(), ops: d.slice(ci+1).trim()});
+      } else if (ci > 0 && ci <= 45) {
+        currentMeal.rows.push({cat: d.slice(0,ci).trim(), ops: d.slice(ci+1).trim()});
+      } else if (d.length > 3 && !/^(kcal|g de|total)/i.test(d)) {
+        currentMeal.rows.push({cat: '', ops: d});
       }
       return;
     }
-    // Generic paragraph
-    bodyHtml += '<p class="para">'+display+'</p>';
+    if (mode === 'supl') {
+      if (/^\|[-| ]+\|/.test(d)) return;
+      suplLines.push(d);
+      return;
+    }
+    if (mode === 'rec') {
+      if (/^\|[-| ]+\|/.test(d)) return;
+      if (/^[-*•►\d\.]/.test(d)) { recLines.push({type:'bullet', text:d.replace(/^[-*•►\d\.]+\s*/,'')}); }
+      else { recLines.push({type:'para', text:d}); }
+    }
   });
 
-  closeMealTable();
+  // ── Build meal HTML ──────────────────────────────────────────────
+  var mealHtml = '';
+  mealBlocks.forEach(function(mb) {
+    mealHtml += '<div class="meal-block">'
+      +'<div class="meal-title">'+mb.nome+'</div>'
+      +'<table class="meal-table"><thead><tr><th>Categoria</th><th>Op&ccedil;&otilde;es</th></tr></thead><tbody>';
+    mb.rows.forEach(function(r) {
+      mealHtml += '<tr><td class="cat">'+(r.cat||'')+'</td><td class="ops">'+r.ops+'</td></tr>';
+    });
+    mealHtml += '</tbody></table></div>';
+  });
+
+  // ── Build supl HTML ──────────────────────────────────────────────
+  var suplHtmlFromText = '';
+  suplLines.forEach(function(l) {
+    var d = l.replace(/\*\*/g,'').replace(/\*/g,'').trim();
+    if (!d) return;
+    var ci = d.indexOf(':');
+    if (ci > 0 && ci <= 60) {
+      suplHtmlFromText += '<div class="supl-item">'
+        +'<div class="supl-nome">'+d.slice(0,ci).trim()+'</div>'
+        +'<div class="supl-just">'+d.slice(ci+1).trim()+'</div>'
+        +'</div>';
+    } else if (/^[-*•►\d\.]/.test(d)) {
+      var txt = d.replace(/^[-*•►\d\.]+\s*/,'');
+      suplHtmlFromText += '<div class="supl-item"><div class="supl-nome">'+txt+'</div></div>';
+    } else {
+      suplHtmlFromText += '<p class="para">'+d+'</p>';
+    }
+  });
+
+  if (!suplHtmlFromText) {
+    var SUPLS_DEFAULT = [
+      {n:'ÔMEGA 3 1000MG',     h:'1 dose/dia junto à primeira refeição', j:'Essencial para saúde cardiovascular, reduz inflamações e auxilia na recuperação muscular e regulação hormonal.'},
+      {n:'VITAMINA D 2.000UI', h:'1 dose/dia junto à primeira refeição', j:'Essencial para saúde óssea, imunidade e equilíbrio hormonal. Auxilia na força muscular.'},
+      {n:'MULTIVITAMÍNICO',    h:'1 dose/dia junto à primeira refeição', j:'Repõe vitaminas e minerais, mantém o metabolismo funcionando e otimiza a recuperação.'},
+      {n:'COMPLEXO B',         h:'1 dose/dia junto à primeira refeição', j:'Fundamental para metabolismo energético, disposição e síntese proteica.'},
+    ];
+    suplHtmlFromText = SUPLS_DEFAULT.map(function(s){
+      return '<div class="supl-item">'
+        +'<div class="supl-nome">'+s.n+' <span class="supl-hor">&#10145; '+s.h+'</span></div>'
+        +'<div class="supl-just"><strong>Por qu&ecirc;?</strong> '+s.j+'</div>'
+        +'</div>';
+    }).join('');
+  }
 
   // ── CSS ──────────────────────────────────────────────────────────
   var logoSrc = logo || '';
@@ -14471,100 +14483,74 @@ function dietGerarPDFNavegador(diet) {
     '@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap");',
     '*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }',
     'html { font-size:14px; }',
-    'body { font-family:"Inter",Arial,sans-serif; background:#f3f4f6; color:#111; }',
-
-    /* Toolbar */
-    '#toolbar { position:fixed; top:0; left:0; right:0; height:50px; background:#1d2939; display:flex; align-items:center; gap:10px; padding:0 16px; z-index:9999; box-shadow:0 2px 8px rgba(0,0,0,.4); }',
-    '#toolbar button { padding:7px 16px; border:none; border-radius:6px; cursor:pointer; font-size:13px; font-weight:700; }',
-    '#btn-print { background:#1570ef; color:#fff; }',
+    'body { font-family:"Inter",Arial,sans-serif; background:#e5e7eb; color:#111; }',
+    '#toolbar { position:fixed; top:0; left:0; right:0; min-height:54px; background:#1d2939; display:flex; align-items:center; gap:6px; padding:0 14px; z-index:9999; box-shadow:0 2px 8px rgba(0,0,0,.4); flex-wrap:wrap; }',
+    '#toolbar .tb-sep { width:1px; height:28px; background:rgba(255,255,255,.18); margin:0 4px; }',
+    '#toolbar button { padding:6px 12px; border:none; border-radius:5px; cursor:pointer; font-size:12px; font-weight:700; }',
+    '#btn-print { background:#1570ef; color:#fff; font-size:13px; padding:7px 18px; }',
     '#btn-print:hover { background:#1250b0; }',
     '#btn-close { background:#374151; color:#fff; }',
     '#btn-close:hover { background:#4b5563; }',
-    '#toolbar span { color:#9ca3af; font-size:12px; margin-left:6px; }',
-    'body { padding-top:58px; }',
-
-    /* Page */
+    '.tb-btn { background:rgba(255,255,255,.1); color:#e2e8f0; border:1px solid rgba(255,255,255,.12) !important; }',
+    '.tb-btn:hover { background:rgba(255,255,255,.22); }',
+    '.tb-label { color:#9ca3af; font-size:11px; white-space:nowrap; }',
+    'select.tb-select { background:#374151; color:#e2e8f0; border:1px solid rgba(255,255,255,.12); border-radius:5px; padding:5px 8px; font-size:12px; cursor:pointer; }',
+    'input.tb-color { width:30px; height:28px; border:none; border-radius:4px; cursor:pointer; padding:2px; background:#374151; }',
+    'body { padding-top:62px; }',
     '.page { width:794px; min-height:1123px; margin:20px auto; background:#fff; padding:52px 52px 70px; position:relative; box-shadow:0 4px 24px rgba(0,0,0,.12); }',
-
-    /* Watermark */
-    '.page::before { content:""; position:absolute; inset:0; background-image:url("'+logoSrc+'"); background-repeat:no-repeat; background-position:center; background-size:70%; opacity:0.04; pointer-events:none; }',
-
-    /* Header */
+    '.page::before { content:""; position:absolute; inset:0; background-image:url("'+logoSrc+'"); background-repeat:no-repeat; background-position:center; background-size:60%; opacity:0.04; pointer-events:none; z-index:0; }',
+    '.page > * { position:relative; z-index:1; }',
     '.hdr { display:flex; justify-content:space-between; align-items:flex-start; padding-bottom:10px; border-bottom:2.5px solid #111; margin-bottom:20px; }',
-    '.hdr-left {}',
     '.hdr-title { font-size:20px; font-weight:900; text-transform:uppercase; letter-spacing:-.02em; }',
     '.hdr-sub { font-size:12px; color:#555; margin-top:4px; }',
-    '.hdr-crn { font-size:12px; color:#555; margin-top:1px; }',
+    '.hdr-crn { font-size:12px; font-weight:700; color:#111; margin-top:1px; }',
     '.hdr-logo { width:72px; height:auto; }',
-
-    /* Section / banner */
-    '.banner { text-align:center; font-size:14px; font-weight:700; letter-spacing:.35em; color:#666; margin:18px 0 12px; text-transform:uppercase; }',
-    '.sec-title { font-size:14px; font-weight:900; text-transform:uppercase; letter-spacing:.05em; margin:16px 0 6px; color:#111; border-bottom:1px solid #eee; padding-bottom:4px; }',
-
-    /* Passo-a-passo */
-    '.passo { border:1px solid #d0d5dd; border-radius:6px; padding:10px 16px; margin-bottom:16px; text-align:center; }',
-    '.passo-t { font-size:12px; font-weight:900; margin-bottom:4px; }',
-    '.passo-c { font-size:11px; color:#1570ef; font-weight:600; }',
-
-    /* Meal title */
-    '.meal-title { text-align:center; font-size:14px; font-weight:800; letter-spacing:.22em; color:#1570ef; text-transform:uppercase; margin:16px 0 6px; }',
-
-    /* Meal table */
-    '.meal-table { width:100%; border-collapse:collapse; margin-bottom:6px; }',
-    '.meal-table th { text-align:left; font-size:11px; font-weight:600; color:#888; border-bottom:1.5px solid #d0d5dd; padding:4px 10px; }',
-    '.meal-table td { padding:6px 10px; border-bottom:1px solid #f0f0f0; font-size:12.5px; vertical-align:top; }',
-    '.meal-table td.cat { font-weight:700; width:140px; }',
+    '.banner { text-align:center; font-size:13px; font-weight:700; letter-spacing:.35em; color:#666; margin:16px 0 10px; text-transform:uppercase; }',
+    '.sec-title { font-size:13px; font-weight:900; text-transform:uppercase; letter-spacing:.05em; margin:16px 0 6px; color:#111; border-bottom:1px solid #eee; padding-bottom:4px; }',
+    '.passo { border:1px solid #d0d5dd; border-radius:6px; padding:9px 14px; margin-bottom:14px; text-align:center; }',
+    '.passo-t { font-size:11px; font-weight:900; margin-bottom:3px; }',
+    '.passo-c { font-size:10.5px; color:#1570ef; font-weight:600; }',
+    '.meal-block { margin-bottom:14px; }',
+    '.meal-title { background:#111; color:#fff; font-size:12px; font-weight:900; letter-spacing:.25em; text-transform:uppercase; padding:8px 14px; margin-bottom:0; border-radius:4px 4px 0 0; }',
+    '.meal-table { width:100%; border-collapse:collapse; border:1px solid #d0d5dd; border-top:none; margin-bottom:0; }',
+    '.meal-table th { text-align:left; font-size:10.5px; font-weight:700; color:#666; background:#f9fafb; border-bottom:1.5px solid #d0d5dd; padding:5px 12px; }',
+    '.meal-table td { padding:6px 12px; border-bottom:1px solid #f0f0f0; font-size:12px; vertical-align:top; }',
+    '.meal-table td.cat { font-weight:700; width:150px; color:#111; }',
     '.meal-table td.ops { color:#333; }',
     '.meal-table tr:last-child td { border-bottom:none; }',
-
-    /* Paragraphs outside tables */
     '.para { font-size:12.5px; color:#333; margin:4px 0; line-height:1.6; }',
     '.bullet { font-size:12.5px; color:#333; margin:3px 0 3px 16px; line-height:1.6; }',
     '.bullet::before { content:"• "; color:#1570ef; }',
-
-    /* Refeição Livre */
-    '.livre-box { text-align:center; padding:18px; background:#f9fafb; border-radius:8px; margin:16px 0; }',
-    '.livre-box h2 { font-size:22px; font-weight:900; letter-spacing:.12em; }',
-    '.livre-sub { font-size:13px; font-weight:700; letter-spacing:.3em; color:#666; margin-top:4px; }',
-
-    /* Suplementos */
-    '.supl-item { border:1px solid #eee; border-radius:6px; padding:10px 14px; margin-bottom:8px; }',
-    '.supl-nome { font-size:13px; font-weight:800; text-transform:uppercase; }',
-    '.supl-hor { color:#1570ef; font-size:12px; font-weight:600; }',
-    '.supl-just { font-size:11.5px; color:#666; margin-top:4px; }',
-
-    /* Higiene do sono */
+    '.livre-capa { background:#111; color:#fff; padding:32px 24px; text-align:center; border-radius:8px; margin:20px 0 24px; }',
+    '.livre-capa h2 { font-size:28px; font-weight:900; letter-spacing:.15em; }',
+    '.livre-capa p { font-size:12px; letter-spacing:.3em; opacity:.7; margin-top:6px; }',
+    '.supl-item { border-left:3px solid #1570ef; border-radius:0 6px 6px 0; background:#f8faff; padding:10px 14px; margin-bottom:8px; }',
+    '.supl-nome { font-size:13px; font-weight:900; text-transform:uppercase; color:#111; }',
+    '.supl-hor { color:#1570ef; font-size:11.5px; font-weight:700; margin-left:6px; }',
+    '.supl-just { font-size:11.5px; color:#555; margin-top:3px; }',
     '.sono-item { margin-bottom:14px; }',
     '.sono-bold { font-size:13px; font-weight:800; text-transform:uppercase; margin-bottom:2px; }',
     '.sono-txt { font-size:12px; color:#333; }',
     '.sono-dica { font-size:11.5px; color:#1570ef; margin-top:2px; }',
-
-    /* Footer logo */
-    '.footer-logo { display:block; margin:32px auto 0; width:80px; opacity:.9; }',
-
-    /* Contenteditable */
-    '[contenteditable="true"] { outline:none; }',
-    '[contenteditable="true"]:focus { outline:2px dashed #1570ef; outline-offset:2px; border-radius:3px; }',
-
-    /* Print */
+    '.footer-logo { display:block; margin:28px auto 0; width:72px; opacity:.85; }',
+    '[contenteditable="true"] { outline:none; min-height:4px; }',
+    '[contenteditable="true"]:focus { outline:2px dashed rgba(21,112,239,.5); outline-offset:2px; border-radius:3px; }',
     '@media print {',
     '  #toolbar { display:none!important; }',
     '  body { padding-top:0!important; background:#fff; }',
-    '  .page { margin:0; box-shadow:none; width:210mm; min-height:297mm; padding:14mm 14mm 20mm; }',
+    '  .page { margin:0; box-shadow:none; width:210mm; min-height:297mm; padding:12mm 14mm 18mm; }',
     '  @page { size:A4; margin:0; }',
     '}',
   ].join('\n');
 
-  // ── Logo helpers ─────────────────────────────────────────────────
   var logoImg  = logo ? '<img class="hdr-logo" src="'+logo+'" alt="TEAMJE">' : '<span style="font-size:22px;font-weight:900;letter-spacing:2px;">TEAMJE</span>';
   var footerLg = logo ? '<img class="footer-logo" src="'+logo+'" alt="">' : '';
 
-  // ── Standard pages (fixas) ───────────────────────────────────────
   function pageHdr(showCrn) {
     return '<div class="hdr">'
-      +'<div class="hdr-left">'
-        +'<div class="hdr-title">PROTOCOLO DIETÉTICO '+num+': '+nome.toUpperCase()+'</div>'
-        +'<div class="hdr-sub">DATA '+data+'&nbsp;&nbsp;&nbsp;&nbsp;'+kcal+'kcal</div>'
+      +'<div>'
+        +'<div class="hdr-title">PROTOCOLO DIE&Eacute;TICO '+num+': '+nome.toUpperCase()+'</div>'
+        +'<div class="hdr-sub">DATA '+data+'&nbsp;&nbsp;&nbsp;&nbsp;'+kcal+' KCAL</div>'
         +(showCrn ? '<div class="hdr-crn">CRN: '+CRN+'</div>' : '')
       +'</div>'
       +logoImg
@@ -14572,70 +14558,54 @@ function dietGerarPDFNavegador(diet) {
   }
 
   var passo = '<div class="passo">'
-    +'<div class="passo-t">PASSO-A-PASSO: ESCOLHA UMA OPÇÃO DE CADA CATEGORIA POR REFEIÇÃO</div>'
-    +'<div class="passo-c">Carboidrato: Escolha uma opção &nbsp;|&nbsp; Proteína: Escolha uma opção</div>'
-    +'<div class="passo-c">Gordura: Escolha uma opção &nbsp;|&nbsp; Fruta: Escolha uma opção ou mais respeitando as 150g</div>'
+    +'<div class="passo-t">PASSO-A-PASSO: ESCOLHA UMA OP&Ccedil;&Atilde;O DE CADA CATEGORIA POR REFEI&Ccedil;&Atilde;O</div>'
+    +'<div class="passo-c">Carboidrato: Escolha uma op&ccedil;&atilde;o &nbsp;|&nbsp; Prote&iacute;na: Escolha uma op&ccedil;&atilde;o</div>'
+    +'<div class="passo-c">Gordura: Escolha uma op&ccedil;&atilde;o &nbsp;|&nbsp; Fruta: Escolha uma op&ccedil;&atilde;o ou mais respeitando as 150g</div>'
     +'</div>';
 
-  // Page 1: header + banner + passo + refeições (do rawText)
   var page1 = '<div class="page" contenteditable="true">'
     + pageHdr(true)
-    + '<div class="banner">REFEIÇÕES</div>'
+    + '<div class="banner">REFEI&Ccedil;&Otilde;ES</div>'
     + passo
-    + bodyHtml
+    + mealHtml
     + footerLg
     + '</div>';
 
-  // Pages 2-6: fixed content
   var page2 = '<div class="page" contenteditable="true">'
     + pageHdr(false)
-    + '<div class="livre-box"><h2>REFEIÇÃO LIVRE</h2><div class="livre-sub">CORRETAMENTE</div></div>'
-    + '<p class="para" style="margin-top:14px;">Se você acha que dieta é sinônimo de sofrimento ou que precisa viver à base de frango e batata-doce para ter resultado… respira.</p>'
-    + '<p class="para">A refeição livre existe justamente para quebrar essa ideia. Ela é uma ferramenta estratégica — e não uma desculpa para exagerar. Quando usada com consciência, pode melhorar sua adesão, controlar a ansiedade e até acelerar seus resultados.</p>'
-    + '<div class="sec-title">O QUE É UMA REFEIÇÃO LIVRE?</div>'
-    + '<p class="para">É uma ou duas refeições na semana em que você pode comer algo fora do seu plano alimentar, sem se preocupar com pesar alimentos, contar macros ou seguir uma estrutura rígida. Mas atenção: "livre" não é sinônimo de "descontrolado".</p>'
+    + '<div class="livre-capa"><h2>REFEI&Ccedil;&Atilde;O LIVRE</h2><p>USE COM CONSCI&Ecirc;NCIA</p></div>'
+    + '<p class="para">Se voc&ecirc; acha que dieta &eacute; sin&ocirc;nimo de sofrimento ou que precisa viver &agrave; base de frango e batata-doce para ter resultado&hellip; respira.</p>'
+    + '<p class="para" style="margin-top:8px;">A refei&ccedil;&atilde;o livre existe justamente para quebrar essa ideia. Ela &eacute; uma ferramenta estrat&eacute;gica &mdash; e n&atilde;o uma desculpa para exagerar.</p>'
+    + '<div class="sec-title">O QUE &Eacute; UMA REFEI&Ccedil;&Atilde;O LIVRE?</div>'
+    + '<p class="para">&Eacute; uma ou duas refei&ccedil;&otilde;es na semana em que voc&ecirc; pode comer algo fora do seu plano alimentar, sem se preocupar com pesar alimentos ou contar macros.</p>'
     + '<div class="sec-title">QUANDO FAZER?</div>'
     + '<p class="bullet">1 vez por semana</p>'
-    + '<p class="bullet">Substituindo até 2 refeições da sua dieta no mesmo dia</p>'
-    + '<div class="sec-title">OBJETIVOS:</div>'
-    + '<p class="bullet">Reduzir ansiedade e compulsão</p>'
-    + '<p class="bullet">Melhorar a adesão ao plano alimentar</p>'
-    + '<p class="bullet">Aumentar momentaneamente a leptina (hormônio que regula fome e gasto energético)</p>'
-    + '<p class="bullet">Recuperar energia física e mental</p>'
-    + '<p class="bullet">Tornar o processo mais leve e sustentável</p>'
-    + '<div class="sec-title">CUIDADOS IMPORTANTES:</div>'
-    + '<p class="bullet">Evite transformar a refeição livre em um dia inteiro de exageros.</p>'
-    + '<p class="bullet">Não compense no dia seguinte com jejum ou restrições extremas.</p>'
-    + '<p class="bullet">Cuidado com o álcool em excesso.</p>'
+    + '<p class="bullet">Substituindo at&eacute; 2 refei&ccedil;&otilde;es da sua dieta no mesmo dia</p>'
+    + '<div class="sec-title">OBJETIVOS</div>'
+    + '<p class="bullet">Reduzir ansiedade e compuls&atilde;o</p>'
+    + '<p class="bullet">Melhorar a ades&atilde;o ao plano alimentar</p>'
+    + '<p class="bullet">Aumentar momentaneamente a leptina (horm&ocirc;nio que regula fome e gasto energ&eacute;tico)</p>'
+    + '<p class="bullet">Recuperar energia f&iacute;sica e mental</p>'
+    + '<div class="sec-title">CUIDADOS IMPORTANTES</div>'
+    + '<p class="bullet">Evite transformar a refei&ccedil;&atilde;o livre em um dia inteiro de exageros.</p>'
+    + '<p class="bullet">N&atilde;o compense no dia seguinte com jejum ou restri&ccedil;&otilde;es extremas.</p>'
+    + '<p class="bullet">Cuidado com o &aacute;lcool em excesso.</p>'
     + footerLg
     + '</div>';
-
-  var SUPLS = [
-    {n:'ÔMEGA 3 1000MG',     h:'1 dose/dia junto à primeira refeição', j:'Essencial para saúde cardiovascular, reduz inflamações e auxilia na recuperação muscular e regulação hormonal.'},
-    {n:'VITAMINA D 2.000UI', h:'1 dose/dia junto à primeira refeição', j:'Essencial para saúde óssea, imunidade e equilíbrio hormonal. Auxilia na força muscular.'},
-    {n:'MULTIVITAMÍNICO',    h:'1 dose/dia junto à primeira refeição', j:'Repõe vitaminas e minerais, mantém o metabolismo funcionando e otimiza a recuperação.'},
-    {n:'COMPLEXO B',         h:'1 dose/dia junto à primeira refeição', j:'Fundamental para metabolismo energético, disposição e síntese proteica.'},
-  ];
-  var suplHtml = SUPLS.map(function(s){
-    return '<div class="supl-item">'
-      +'<div class="supl-nome">'+s.n+' <span class="supl-hor">➡ '+s.h+'</span></div>'
-      +'<div class="supl-just"><strong>Por quê?</strong> '+s.j+'</div>'
-      +'</div>';
-  }).join('');
 
   var page3 = '<div class="page" contenteditable="true">'
     + pageHdr(false)
-    + '<div class="banner">SUPLEMENTOS BÁSICOS</div>'
-    + suplHtml
+    + '<div class="banner">SUPLEMENTOS</div>'
+    + suplHtmlFromText
     + footerLg
     + '</div>';
 
   var SONO = [
-    ['USE CHÁS RELAXANTES ANTES DE DORMIR','Ervas como passiflora, mulungu e melissa têm propriedades calmantes.','Evite chás com cafeína. Tome o chá cerca de 30 minutos antes de dormir.'],
-    ['AROMATIZE O AMBIENTE COM ÓLEOS ESSENCIAIS','Aromas como lavanda e laranja doce podem reduzir a tensão e criar um clima propício ao sono.','Utilize difusores ou velas aromáticas seguras para uso noturno.'],
-    ['EVITE ESTIMULANTES APÓS AS 18H','Substâncias como cafeína (café, chá-preto, refrigerantes) e nicotina podem interferir no ciclo do sono.','Fique atento a medicamentos e suplementos que contenham cafeína.'],
-    ['CRIE UM RITUAL DE RELAXAMENTO','Técnicas como respiração profunda, leitura leve ou meditação ajudam a desacelerar corpo e mente.','Crie uma rotina simples e repita todos os dias.'],
-    ['REDUZA A EXPOSIÇÃO A LUZES FORTES À NOITE','Ambientes muito iluminados dificultam a produção de melatonina.',''],
+    ['USE CH&Aacute;S RELAXANTES ANTES DE DORMIR','Ervas como passiflora, mulungu e melissa t&ecirc;m propriedades calmantes.','Evite ch&aacute;s com cafe&iacute;na. Tome o ch&aacute; cerca de 30 minutos antes de dormir.'],
+    ['AROMATIZE O AMBIENTE COM &Oacute;LEOS ESSENCIAIS','Aromas como lavanda e laranja doce podem reduzir a tens&atilde;o e criar um clima prop&iacute;cio ao sono.','Utilize difusores ou velas arom&aacute;ticas seguras para uso noturno.'],
+    ['EVITE ESTIMULANTES AP&Oacute;S AS 18H','Subst&acirc;ncias como cafe&iacute;na (caf&eacute;, ch&aacute;-preto, refrigerantes) e nicotina podem interferir no ciclo do sono.','Fique atento a medicamentos e suplementos que contenham cafe&iacute;na.'],
+    ['CRIE UM RITUAL DE RELAXAMENTO','T&eacute;cnicas como respira&ccedil;&atilde;o profunda, leitura leve ou medita&ccedil;&atilde;o ajudam a desacelerar corpo e mente.','Crie uma rotina simples e repita todos os dias.'],
+    ['REDUZA A EXPOSI&Ccedil;&Atilde;O A LUZES FORTES &Agrave; NOITE','Ambientes muito iluminados dificultam a produ&ccedil;&atilde;o de melatonina.',''],
   ];
   var sonoHtml = SONO.map(function(s){
     return '<div class="sono-item">'
@@ -14648,35 +14618,63 @@ function dietGerarPDFNavegador(diet) {
   var page4 = '<div class="page" contenteditable="true">'
     + pageHdr(false)
     + '<div class="banner">HIGIENE DO SONO</div>'
-    + '<p class="para" style="margin-bottom:14px;">Uma noite mal dormida não apenas prejudicará o crescimento muscular ou o emagrecimento, mas também estimulará o catabolismo, ou seja, a perda de massa muscular.</p>'
+    + '<p class="para" style="margin-bottom:14px;">Uma noite mal dormida n&atilde;o apenas prejudicar&aacute; o crescimento muscular ou o emagrecimento, mas tamb&eacute;m estimular&aacute; o catabolismo, ou seja, a perda de massa muscular.</p>'
     + sonoHtml
     + footerLg
     + '</div>';
 
+  var recHtml = recLines.map(function(r){
+    if (r.type==='sec')    return '<div class="sec-title">'+r.text+'</div>';
+    if (r.type==='bullet') return '<p class="bullet">'+r.text+'</p>';
+    return '<p class="para">'+r.text+'</p>';
+  }).join('');
+  if (!recHtml) {
+    recHtml = '<div class="sec-title">CARDIO: SEMPRE BEM-VINDO!</div>'
+      +'<p class="para">Incorpore cardio de 5 a 7 vezes por semana, 30 minutos/dia.</p>'
+      +'<div class="sec-title">&Aacute;GUA &Eacute; VIDA: ADOTE UMA GARRAFA!</div>'
+      +'<p class="para">35 ml por kg de peso. Ex: 68kg = 2,4 litros/dia.</p>'
+      +'<div class="sec-title">MUSCULA&Ccedil;&Atilde;O: FOCO NO TREINO!</div>'
+      +'<p class="para">Treine 4 a 5 vezes por semana com foco em muscula&ccedil;&atilde;o.</p>';
+  }
   var page5 = '<div class="page" contenteditable="true">'
     + pageHdr(false)
-    + '<div class="banner">RECOMENDAÇÕES</div>'
-    + '<div class="sec-title">CARDIO: SEMPRE BEM-VINDO!</div>'
-    + '<p class="para">Incorpore cardio de 5 a 7 vezes por semana, 30 minutos/dia.</p>'
-    + '<div class="sec-title">ÁGUA É VIDA: ADOTE UMA GARRAFA!</div>'
-    + '<p class="para">35 ml por kg de peso. Ex: 68kg = 2,4 litros/dia.</p>'
-    + '<div class="sec-title">MUSCULAÇÃO: FOCO NO TREINO!</div>'
-    + '<p class="para">Treine 4 a 5 vezes por semana com foco em musculação.</p>'
+    + '<div class="banner">RECOMENDA&Ccedil;&Otilde;ES</div>'
+    + recHtml
     + footerLg
     + '</div>';
 
-  // ── Abrir janela com editor ──────────────────────────────────────
-  var win = window.open('','_blank','width=940,height=900');
+  var win = window.open('','_blank','width=980,height=920');
   if (!win) { showToast('Permita pop-ups neste site!','error'); return; }
 
   var toolbar = '<div id="toolbar">'
-    +'<button id="btn-print" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>'
-    +'<button id="btn-close" onclick="window.close()">✕ Fechar</button>'
-    +'<span>✏️ Clique em qualquer parte da página para editar diretamente</span>'
+    +'<button id="btn-print" onclick="window.print()">&#128424;&#65039; Imprimir / Salvar PDF</button>'
+    +'<button id="btn-close" onclick="window.close()">&#10005; Fechar</button>'
+    +'<div class="tb-sep"></div>'
+    +'<button class="tb-btn" onclick="document.execCommand(\'bold\')" title="Negrito"><strong>B</strong></button>'
+    +'<button class="tb-btn" onclick="document.execCommand(\'italic\')" title="It&aacute;lico"><em>I</em></button>'
+    +'<button class="tb-btn" onclick="document.execCommand(\'underline\')" title="Sublinhado"><u>U</u></button>'
+    +'<div class="tb-sep"></div>'
+    +'<span class="tb-label">Fonte:</span>'
+    +'<select class="tb-select" onchange="document.execCommand(\'fontSize\',false,this.value)">'
+    +'<option value="1">8px</option><option value="2">10px</option><option value="3" selected>12px</option>'
+    +'<option value="4">14px</option><option value="5">16px</option><option value="6">20px</option><option value="7">24px</option>'
+    +'</select>'
+    +'<div class="tb-sep"></div>'
+    +'<span class="tb-label">Cor:</span>'
+    +'<input class="tb-color" type="color" value="#111111" oninput="document.execCommand(\'foreColor\',false,this.value)" title="Cor do texto">'
+    +'<input class="tb-color" type="color" value="#ffffff" oninput="document.execCommand(\'hiliteColor\',false,this.value)" title="Destaque">'
+    +'<div class="tb-sep"></div>'
+    +'<button class="tb-btn" onclick="document.execCommand(\'justifyLeft\')" title="Esquerda">&#8801;</button>'
+    +'<button class="tb-btn" onclick="document.execCommand(\'justifyCenter\')" title="Centro">&#8801;</button>'
+    +'<div class="tb-sep"></div>'
+    +'<button class="tb-btn" onclick="(function(){var s=window.getSelection();if(s.rangeCount){var r=s.getRangeAt(0);var c=r.commonAncestorContainer;var el=c.nodeType===3?c.parentNode:c;var p=el.closest(\'tr,p,div.sono-item,div.supl-item\');if(p){p.remove();}}})()" title="Apagar elemento">&#128465; Linha</button>'
+    +'<button class="tb-btn" onclick="(function(){var s=window.getSelection();if(s.rangeCount){var r=s.getRangeAt(0);var c=r.commonAncestorContainer;var el=c.nodeType===3?c.parentNode:c;var mb=el.closest(\'.meal-block\');if(mb){mb.remove();}}})()" title="Apagar refei&ccedil;&atilde;o">&#128465; Tabela</button>'
+    +'<div class="tb-sep"></div>'
+    +'<span style="color:#9ca3af;font-size:11px;">&#9998;&#65039; Clique no texto para editar</span>'
     +'</div>';
 
   win.document.write('<!DOCTYPE html><html lang="pt-BR"><head>'
-    +'<meta charset="UTF-8"><title>Dieta '+num+' — '+nome+'</title>'
+    +'<meta charset="UTF-8"><title>Dieta '+num+' &mdash; '+nome+'</title>'
     +'<style>'+CSS+'</style>'
     +'</head><body>'
     +toolbar
@@ -14684,8 +14682,9 @@ function dietGerarPDFNavegador(diet) {
     +'</body></html>');
   win.document.close();
 
-  showToast('✅ Editor aberto! Edite livremente e clique "Imprimir / Salvar PDF".','success');
+  showToast('✅ Editor aberto! Edite e clique "Imprimir / Salvar PDF".','success');
 }
+
 
 
 // ── Send via WhatsApp ─────────────────────────────────────────────────
