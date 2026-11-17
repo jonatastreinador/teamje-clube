@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>JE Clube Dashboard v84g</title>
+<title>JE Clube Dashboard v84h</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
@@ -14345,422 +14345,348 @@ function dietExportPDF() {
   if (!_dietStudent) { showToast('Nenhum aluno selecionado','error'); return; }
   var diet = _dietLastDiet[_dietStudent.id];
   if (!diet) { showToast('Gere uma dieta primeiro no chat!','error'); return; }
-
-  showToast('⏳ Preparando PDF...','success');
+  showToast('⏳ Preparando editor...','success');
   setTimeout(function() {
-    try {
-      dietGerarPDFNavegador(diet);
-    } catch(e) {
-      console.error(e);
-      showToast('Erro ao gerar PDF: ' + e.message, 'error');
-    }
+    try { dietGerarPDFNavegador(diet); }
+    catch(e) { console.error(e); showToast('Erro: '+e.message,'error'); }
   }, 100);
 }
 
-function dietParseForPDF(diet) {
-  // Recebe o objeto diet {nome, numero, data, kcal, rawText}
-  // Retorna objeto estruturado para dietGerarPDFNavegador
-  var text = (typeof diet === 'string') ? diet : (diet.rawText || '');
-  var nome   = (typeof diet === 'object' && diet.nome)   ? diet.nome   : 'Aluno';
-  var numero = (typeof diet === 'object' && diet.numero) ? diet.numero : '1';
-  var data   = (typeof diet === 'object' && diet.data)   ? diet.data   : new Date().toLocaleDateString('pt-BR');
-  var kc     = text.match(/(\d{3,4})\s*kcal/i);
-  var kcal   = kc ? kc[1] : ((typeof diet === 'object' && diet.kcal) ? diet.kcal : '2000');
-
-  // ── Parse refeições ──────────────────────────────────────────────
-  // Detecta blocos de refeição pelo header (linha toda maiúscula ou palavras-chave)
-  var MEAL_RE = /(?:^|\n)([ \t]*(?:CAF[EÉ]\s*DA\s*MANH[ÃA]|LANCHE\s*(?:DA\s*(?:MANH[ÃA]|TARDE)|PR[EÉ]-TREINO|P[OÓ]S-TREINO)?|ALMO[CÇ]O|JANTAR|CEIA|PR[EÉ]-TREINO|P[OÓ]S-TREINO)[^\n]*)/gi;
-  var matches = [];
-  var m;
-  while ((m = MEAL_RE.exec(text)) !== null) {
-    var headerStr = m[1].trim();
-    var idx = m.index + m[0].lastIndexOf(headerStr);
-    matches.push({ name: headerStr, index: idx });
-  }
-
-  var refeicoes = [];
-  for (var i = 0; i < matches.length; i++) {
-    var mealName = matches[i].name;
-    var bodyStart = matches[i].index + mealName.length;
-    var bodyEnd   = (i+1 < matches.length) ? matches[i+1].index : text.length;
-    var body      = text.slice(bodyStart, bodyEnd).trim();
-
-    var itens = [];
-    var avontade = '';
-    var lines = body.split('\n');
-
-    lines.forEach(function(line) {
-      var l = line.replace(/^[\s\-\*•►]+/, '').trim();
-      if (!l) return;
-      // Skip kcal/macro totals, markdown headers, table separators
-      if (/^\d+\s*kcal/i.test(l)) return;
-      if (/^#{1,3}\s/.test(l)) return;
-      if (/^\|[-| ]+\|$/.test(l)) return;
-      if (/^(calorias totais|macros|macronutrientes|proteína total|carboidrato total|gordura total)/i.test(l)) return;
-      // Skip section headers that are not meals (SUPLEMENTOS, RECOMENDAÇÕES, etc.)
-      if (/^(SUPLEMENTA|RECOMENDA|HIGIENE|SONO|RESUMO|OBSERVA|DICAS|ESTRATÉGIA)/i.test(l)) return;
-      // "À vontade" line
-      if (/^à[\s-]*vontade/i.test(l)) {
-        var avVal = l.replace(/^à[\s-]*vontade[:\s]*/i, '').trim();
-        if (avVal) avontade = avVal;
-        return;
-      }
-      // Try "Categoria: opções" — colon must be within first 35 chars
-      var ci = l.indexOf(':');
-      if (ci > 0 && ci <= 35) {
-        var cat = l.slice(0, ci).trim();
-        var ops = l.slice(ci+1).trim();
-        // Category should be a word (no special chars), options non-empty
-        if (cat && ops && /^[A-Za-zÀ-ÿ\s\d\-\/\(\)\.]+$/.test(cat) && cat.length <= 35) {
-          itens.push({ categoria: cat, opcoes: ops });
-          return;
-        }
-      }
-      // Markdown table row: | Categoria | Opções |
-      var tblMatch = l.match(/^\|([^|]+)\|([^|]+)\|/);
-      if (tblMatch) {
-        var cat2 = tblMatch[1].replace(/\*\*/g,'').trim();
-        var ops2 = tblMatch[2].replace(/\*\*/g,'').trim();
-        if (cat2 && ops2 && !/^-+$/.test(cat2)) {
-          itens.push({ categoria: cat2, opcoes: ops2 });
-        }
-        return;
-      }
-      // Fallback: add as generic food line if meaningful length
-      if (l.length > 5 && l.length < 300 && !/^(categoria|opções|options)/i.test(l)) {
-        itens.push({ categoria: 'Alimento', opcoes: l });
-      }
-    });
-
-    if (itens.length || avontade) {
-      refeicoes.push({ nome: mealName, itens: itens, avontade: avontade });
-    }
-  }
-
-  // ── Parse recomendações ──────────────────────────────────────────
-  var rec_cardio = '';
-  var rec_agua = '';
-  var rec_musculacao = '';
-  var rec_dicas = [];
-
-  // Look for recommendations block
-  var recStart = text.search(/RECOMENDA[CÇ][OÕ]ES?/i);
-  if (recStart >= 0) {
-    // End at SUPLEMENTAÇÃO, REFEIÇÃO LIVRE, or end
-    var recEndMatch = text.slice(recStart).search(/SUPLEMENTA[CÇ][AÃ]O|SUPLEMENTOS|REFEI[CÇ][AÃ]O LIVRE|HIGIENE DO SONO/i);
-    var rb = recEndMatch >= 0 ? text.slice(recStart, recStart + recEndMatch) : text.slice(recStart);
-
-    var cM = rb.match(/CARDIO[^\n]*\n([\s\S]*?)(?=\n[A-ZÁÉÍÓÚÂÊÔÃÕ]{3,}[^a-z]|\n[-*]|\n\n|$)/i);
-    if (cM) rec_cardio = cM[1].replace(/^[\s\-\*•]+/gm,'').replace(/\n+/g,' ').trim();
-    var aM = rb.match(/[ÁA]GUA[^\n]*\n([\s\S]*?)(?=\n[A-ZÁÉÍÓÚÂÊÔÃÕ]{3,}[^a-z]|\n[-*]|\n\n|$)/i);
-    if (aM) rec_agua = aM[1].replace(/^[\s\-\*•]+/gm,'').replace(/\n+/g,' ').trim();
-    var muM = rb.match(/MUSCULA[CÇ][AÃ]O[^\n]*\n([\s\S]*?)(?=\n[A-ZÁÉÍÓÚÂÊÔÃÕ]{3,}[^a-z]|\n[-*]|\n\n|$)/i);
-    if (muM) rec_musculacao = muM[1].replace(/^[\s\-\*•]+/gm,'').replace(/\n+/g,' ').trim();
-
-    // Extra dicas
-    rb.split('\n').forEach(function(l) {
-      l = l.replace(/^[\s\-\*•]+/,'').trim();
-      if (l && l.length > 10 && !/CARDIO|[ÁA]GUA|MUSCULA|RECOMENDA/i.test(l) && !/^[A-ZÁÉÍÓÚÂÊÔÃÕ\s]{10,}$/.test(l)) {
-        rec_dicas.push(l);
-      }
-    });
-    rec_dicas = rec_dicas.slice(0,5);
-  }
-
-  // ── Parse suplementos ────────────────────────────────────────────
-  var suplementos = [];
-  var suplStart = text.search(/SUPLEMENTA[CÇ][AÃ]O|SUPLEMENTOS\b/i);
-  if (suplStart >= 0) {
-    var suplEnd = text.slice(suplStart).search(/REFEI[CÇ][AÃ]O LIVRE|HIGIENE DO SONO|RECOMENDA[CÇ][OÕ]/i);
-    var sb = suplEnd >= 0 ? text.slice(suplStart, suplStart+suplEnd) : text.slice(suplStart, suplStart+1000);
-    sb.split('\n').forEach(function(line) {
-      line = line.replace(/^[\s\-\*•►]+/,'').trim();
-      if (line && line.length > 5 && !/^SUPLEMENTA/i.test(line)) suplementos.push(line);
-    });
-  }
-
-  return {
-    nome: nome, numero: numero, data: data, kcal: kcal,
-    refeicoes: refeicoes,
-    suplementos: suplementos,
-    rec_cardio: rec_cardio,
-    rec_agua: rec_agua,
-    rec_musculacao: rec_musculacao,
-    rec_dicas: rec_dicas
-  };
-}
-
 function dietGerarPDFNavegador(diet) {
-  var parsed = dietParseForPDF(diet);
-  var logo   = typeof LOGO_B64 !== 'undefined' ? LOGO_B64 : '';
-  var CRN    = '50708';  // CRN fixo TEAMJE
+  var logo  = typeof LOGO_B64 !== 'undefined' ? LOGO_B64 : '';
+  var CRN   = '50708';
+  var text  = diet.rawText || '';
+  var nome  = diet.nome  || 'Aluno';
+  var num   = diet.numero|| '1';
+  var data  = diet.data  || new Date().toLocaleDateString('pt-BR');
+  var kcalM = text.match(/(\d{3,4})\s*kcal/i);
+  var kcal  = kcalM ? kcalM[1] : (diet.kcal || '2000');
 
-  // ── CSS profissional — idêntico ao modelo PDF TEAMJE ─────────────
+  // ── Converte rawText → HTML de dieta bem formatado ───────────────
+  // Cada linha é analisada e convertida para o elemento visual correto
+
+  var MEAL_NAMES = /^(CAF[EÉ]\s*DA\s*MANH[ÃA]|LANCHE\s*(?:DA\s*(?:MANH[ÃA]|TARDE)|PR[EÉ]-TREINO|P[OÓ]S-TREINO)?|ALMO[CÇ]O|JANTAR|CEIA|PR[EÉ]-TREINO|P[OÓ]S-TREINO)\s*$/i;
+  var SEC_NAMES  = /^(RECOMENDA[CÇ][OÕ]ES?|SUPLEMENTA[CÇ][AÃ]O|SUPLEMENTOS\b|HIGIENE\s*DO\s*SONO|REFEI[CÇ][AÃ]O\s*LIVRE|RESUMO\s*NUTRICIONAL|MACRONUTRIENTES|OBSERVA[CÇ][OÕ]ES?|DICAS?\b|ESTRAT[EÉ]GIA|CARDIO\b|[ÁA]GUA\b|MUSCULA[CÇ][AÃ]O\b)/i;
+  var CATEGORIES = /^(Carboidrato|Prote[ií]na|Gordura|Fruta|[Àà]\s*[Vv]ontade|Vegetal|Legume|Salada|Bebida|Lanche|Alimento|Suplemento)/i;
+
+  // State machine to build HTML
+  var bodyHtml = '';
+  var inMealTable = false;    // currently inside a refeicao table
+  var inSection   = false;    // inside RECOMENDAÇÕES / SUPLEMENTAÇÃO etc.
+
+  function closeMealTable() {
+    if (inMealTable) { bodyHtml += '</tbody></table>'; inMealTable = false; }
+  }
+
+  var lines = text.split('\n');
+  lines.forEach(function(raw) {
+    var line = raw.trim();
+    if (!line) {
+      if (inMealTable) { /* skip empty lines inside table */ }
+      return;
+    }
+
+    // Strip markdown bold
+    var display = line.replace(/\*\*/g,'').replace(/\*/g,'').replace(/^#+\s*/,'').trim();
+
+    // ── MEAL HEADER (CAFÉ DA MANHÃ, ALMOÇO…) ──────────────────────
+    if (MEAL_NAMES.test(display)) {
+      closeMealTable();
+      inSection = false;
+      bodyHtml += '<div class="meal-title">'+display+'</div>'
+        +'<table class="meal-table"><thead><tr><th>Categoria</th><th>Op&ccedil;&otilde;es</th></tr></thead><tbody>';
+      inMealTable = true;
+      return;
+    }
+
+    // ── SECTION HEADERS (RECOMENDAÇÕES, SUPLEMENTAÇÃO…) ──────────
+    if (SEC_NAMES.test(display)) {
+      closeMealTable();
+      inSection = true;
+      bodyHtml += '<div class="sec-title">'+display+'</div>';
+      return;
+    }
+
+    // ── CATEGORY ROW inside a meal table ─────────────────────────
+    if (inMealTable) {
+      // Try "Categoria: opções"
+      var ci = display.indexOf(':');
+      if (ci > 0 && ci <= 40 && CATEGORIES.test(display)) {
+        var cat = display.slice(0, ci).trim();
+        var ops = display.slice(ci+1).trim();
+        bodyHtml += '<tr><td class="cat">'+cat+'</td><td class="ops">'+ops+'</td></tr>';
+        return;
+      }
+      // Skip kcal/macro lines
+      if (/^\d+\s*kcal/i.test(display)) return;
+      if (/^\|[-| ]+\|/.test(display)) return;
+      if (/^(Macronutriente|Macros|Prote[ií]na total|Carboidrato total|\|)/i.test(display)) return;
+      // Check if this looks like a supplement/section header mid-meal — close table
+      if (/^(SUPLEMENTA|SUPLEMENTOS|RECOMENDA|RESUMO|CARDIO:|[ÁA]GUA:|MUSCULA)/i.test(display)) {
+        closeMealTable();
+        inSection = true;
+        bodyHtml += '<div class="sec-title">'+display.replace(/:$/,'')+'</div>';
+        return;
+      }
+      // Otherwise add as generic row
+      if (display.length > 3) {
+        var ci2 = display.indexOf(':');
+        if (ci2 > 0 && ci2 <= 40) {
+          bodyHtml += '<tr><td class="cat">'+display.slice(0,ci2).trim()+'</td><td class="ops">'+display.slice(ci2+1).trim()+'</td></tr>';
+        } else {
+          bodyHtml += '<tr><td class="cat" colspan="2">'+display+'</td></tr>';
+        }
+      }
+      return;
+    }
+
+    // ── LINES OUTSIDE MEALS (recommendations, supplements…) ──────
+    if (!line) return;
+    // Skip markdown table separators
+    if (/^\|[-| ]+\|/.test(display)) return;
+    if (/^\|?(Macronutriente|Quantidade|%)/i.test(display)) return;
+    // Bullet / numbered item
+    if (/^[-*•►\d\.]/.test(raw.trim())) {
+      display = display.replace(/^[-*•►\d\.]+\s*/,'');
+      bodyHtml += '<p class="bullet">'+display+'</p>';
+      return;
+    }
+    // Markdown table row (| col | col |)
+    if (/^\|.+\|$/.test(display)) {
+      var cols = display.split('|').filter(function(c){ return c.trim(); });
+      if (cols.length >= 2) {
+        bodyHtml += '<p class="para"><strong>'+cols[0].replace(/\*\*/g,'').trim()+':</strong> '+cols.slice(1).join(' — ').trim()+'</p>';
+      }
+      return;
+    }
+    // Generic paragraph
+    bodyHtml += '<p class="para">'+display+'</p>';
+  });
+
+  closeMealTable();
+
+  // ── CSS ──────────────────────────────────────────────────────────
+  var logoSrc = logo || '';
   var CSS = [
-    '@import url(\'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap\');',
-    '*{margin:0;padding:0;box-sizing:border-box;}',
-    'body{font-family:\'Inter\',Arial,sans-serif;background:#fff;color:#111;font-size:14px;line-height:1.5;}',
-    '.page{width:210mm;min-height:297mm;padding:14mm 14mm 20mm;position:relative;background:#fff;page-break-after:always;overflow:hidden;}',
-    '.page:last-child{page-break-after:auto;}',
+    '@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap");',
+    '*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }',
+    'html { font-size:14px; }',
+    'body { font-family:"Inter",Arial,sans-serif; background:#f3f4f6; color:#111; }',
+
+    /* Toolbar */
+    '#toolbar { position:fixed; top:0; left:0; right:0; height:50px; background:#1d2939; display:flex; align-items:center; gap:10px; padding:0 16px; z-index:9999; box-shadow:0 2px 8px rgba(0,0,0,.4); }',
+    '#toolbar button { padding:7px 16px; border:none; border-radius:6px; cursor:pointer; font-size:13px; font-weight:700; }',
+    '#btn-print { background:#1570ef; color:#fff; }',
+    '#btn-print:hover { background:#1250b0; }',
+    '#btn-close { background:#374151; color:#fff; }',
+    '#btn-close:hover { background:#4b5563; }',
+    '#toolbar span { color:#9ca3af; font-size:12px; margin-left:6px; }',
+    'body { padding-top:58px; }',
+
+    /* Page */
+    '.page { width:794px; min-height:1123px; margin:20px auto; background:#fff; padding:52px 52px 70px; position:relative; box-shadow:0 4px 24px rgba(0,0,0,.12); }',
 
     /* Watermark */
-    '.page::before{content:\'\';position:absolute;inset:0;background-image:url(\''+logo+'\');background-repeat:no-repeat;background-position:center;background-size:70%;opacity:0.04;pointer-events:none;z-index:0;}',
-    '.content{position:relative;z-index:1;}',
+    '.page::before { content:""; position:absolute; inset:0; background-image:url("'+logoSrc+'"); background-repeat:no-repeat; background-position:center; background-size:70%; opacity:0.04; pointer-events:none; }',
 
     /* Header */
-    '.hdr{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:8px;border-bottom:2px solid #111;margin-bottom:18px;}',
-    '.hdr-title{font-size:18px;font-weight:900;letter-spacing:-.02em;text-transform:uppercase;}',
-    '.hdr-sub{font-size:12px;color:#555;margin-top:3px;}',
-    '.hdr-crn{font-size:12px;color:#555;margin-top:1px;}',
-    '.hdr-logo{width:70px;height:auto;}',
+    '.hdr { display:flex; justify-content:space-between; align-items:flex-start; padding-bottom:10px; border-bottom:2.5px solid #111; margin-bottom:20px; }',
+    '.hdr-left {}',
+    '.hdr-title { font-size:20px; font-weight:900; text-transform:uppercase; letter-spacing:-.02em; }',
+    '.hdr-sub { font-size:12px; color:#555; margin-top:4px; }',
+    '.hdr-crn { font-size:12px; color:#555; margin-top:1px; }',
+    '.hdr-logo { width:72px; height:auto; }',
 
-    /* Banner */
-    '.banner{text-align:center;font-size:14px;font-weight:700;letter-spacing:.35em;color:#555;margin:14px 0 10px;}',
+    /* Section / banner */
+    '.banner { text-align:center; font-size:14px; font-weight:700; letter-spacing:.35em; color:#666; margin:18px 0 12px; text-transform:uppercase; }',
+    '.sec-title { font-size:14px; font-weight:900; text-transform:uppercase; letter-spacing:.05em; margin:16px 0 6px; color:#111; border-bottom:1px solid #eee; padding-bottom:4px; }',
 
     /* Passo-a-passo */
-    '.passo{border:1px solid #ccc;border-radius:6px;padding:10px 14px;margin-bottom:14px;text-align:center;}',
-    '.passo-title{font-size:12px;font-weight:900;margin-bottom:4px;}',
-    '.passo-cat{font-size:11px;color:#1570ef;font-weight:600;}',
+    '.passo { border:1px solid #d0d5dd; border-radius:6px; padding:10px 16px; margin-bottom:16px; text-align:center; }',
+    '.passo-t { font-size:12px; font-weight:900; margin-bottom:4px; }',
+    '.passo-c { font-size:11px; color:#1570ef; font-weight:600; }',
 
-    /* Meal pill */
-    '.pill-wrap{text-align:center;margin:12px 0 6px;}',
-    '.pill{display:inline-block;font-size:13px;font-weight:800;letter-spacing:.22em;color:#1570ef;text-transform:uppercase;}',
+    /* Meal title */
+    '.meal-title { text-align:center; font-size:14px; font-weight:800; letter-spacing:.22em; color:#1570ef; text-transform:uppercase; margin:16px 0 6px; }',
 
     /* Meal table */
-    '.meal-table{width:100%;border-collapse:collapse;margin-bottom:4px;}',
-    '.meal-table th{text-align:left;font-size:11px;font-weight:600;color:#777;border-bottom:1px solid #ddd;padding:4px 8px;}',
-    '.meal-table td{padding:6px 8px;border-bottom:1px solid #eee;font-size:12px;vertical-align:top;}',
-    '.meal-table td:first-child{font-weight:700;width:130px;min-width:100px;}',
-    '.meal-table td.opcoes{color:#333;}',
-    '.meal-table tr:last-child td{border-bottom:none;}',
+    '.meal-table { width:100%; border-collapse:collapse; margin-bottom:6px; }',
+    '.meal-table th { text-align:left; font-size:11px; font-weight:600; color:#888; border-bottom:1.5px solid #d0d5dd; padding:4px 10px; }',
+    '.meal-table td { padding:6px 10px; border-bottom:1px solid #f0f0f0; font-size:12.5px; vertical-align:top; }',
+    '.meal-table td.cat { font-weight:700; width:140px; }',
+    '.meal-table td.ops { color:#333; }',
+    '.meal-table tr:last-child td { border-bottom:none; }',
 
-    /* Recomendações */
-    '.rec-title{font-size:13px;font-weight:900;text-transform:uppercase;margin:12px 0 2px;}',
-    '.rec-text{font-size:12px;color:#333;margin-bottom:6px;}',
-    '.rec-dica{font-size:12px;color:#333;margin-bottom:3px;}',
-    '.rec-dica::before{content:"• ";}',
+    /* Paragraphs outside tables */
+    '.para { font-size:12.5px; color:#333; margin:4px 0; line-height:1.6; }',
+    '.bullet { font-size:12.5px; color:#333; margin:3px 0 3px 16px; line-height:1.6; }',
+    '.bullet::before { content:"• "; color:#1570ef; }',
 
     /* Refeição Livre */
-    '.livre-box{text-align:center;padding:16px;background:#f9f9f9;border-radius:8px;margin:14px 0;}',
-    '.livre-box h2{font-size:22px;font-weight:900;letter-spacing:.12em;}',
-    '.livre-subtitle{font-size:14px;font-weight:700;letter-spacing:.3em;color:#555;margin-top:4px;}',
-    '.livre-text{font-size:12px;color:#333;margin-bottom:8px;}',
-    '.livre-bold{font-size:13px;font-weight:900;text-transform:uppercase;margin:10px 0 4px;}',
-    '.livre-list{padding-left:18px;font-size:12px;color:#333;}',
-    '.livre-list li{margin-bottom:3px;}',
+    '.livre-box { text-align:center; padding:18px; background:#f9fafb; border-radius:8px; margin:16px 0; }',
+    '.livre-box h2 { font-size:22px; font-weight:900; letter-spacing:.12em; }',
+    '.livre-sub { font-size:13px; font-weight:700; letter-spacing:.3em; color:#666; margin-top:4px; }',
 
     /* Suplementos */
-    '.supl-item{border:1px solid #eee;border-radius:6px;padding:10px 12px;margin-bottom:8px;}',
-    '.supl-nome{font-size:13px;font-weight:800;text-transform:uppercase;}',
-    '.supl-seta{color:#1570ef;}',
-    '.supl-horario{font-size:12px;font-weight:600;color:#1570ef;}',
-    '.supl-justif{font-size:11.5px;color:#555;margin-top:4px;}',
+    '.supl-item { border:1px solid #eee; border-radius:6px; padding:10px 14px; margin-bottom:8px; }',
+    '.supl-nome { font-size:13px; font-weight:800; text-transform:uppercase; }',
+    '.supl-hor { color:#1570ef; font-size:12px; font-weight:600; }',
+    '.supl-just { font-size:11.5px; color:#666; margin-top:4px; }',
 
     /* Higiene do sono */
-    '.sono-item{margin-bottom:12px;}',
-    '.sono-bold{font-size:13px;font-weight:800;text-transform:uppercase;margin-bottom:2px;}',
-    '.sono-text{font-size:12px;color:#333;}',
-    '.sono-dica{font-size:11.5px;color:#1570ef;margin-top:2px;}',
-
-    /* Editor toolbar */
-    '#edit-bar{position:fixed;top:0;left:0;right:0;background:#1d2939;padding:10px 16px;display:flex;gap:10px;align-items:center;z-index:999;box-shadow:0 2px 8px rgba(0,0,0,.3);}',
-    '#edit-bar button{padding:8px 16px;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:700;}',
-    '#btn-print{background:#1570ef;color:#fff;}',
-    '#btn-print:hover{background:#1250b0;}',
-    '#btn-close{background:#374151;color:#fff;}',
-    '#btn-close:hover{background:#4b5563;}',
-    '#edit-bar span{color:#9ca3af;font-size:12px;}',
-    'body.editing{padding-top:52px;}',
-    '[contenteditable]:focus{outline:2px solid #1570ef;outline-offset:2px;border-radius:3px;}',
+    '.sono-item { margin-bottom:14px; }',
+    '.sono-bold { font-size:13px; font-weight:800; text-transform:uppercase; margin-bottom:2px; }',
+    '.sono-txt { font-size:12px; color:#333; }',
+    '.sono-dica { font-size:11.5px; color:#1570ef; margin-top:2px; }',
 
     /* Footer logo */
-    '.footer-logo{position:absolute;bottom:8mm;left:50%;transform:translateX(-50%);width:80px;opacity:.92;}',
+    '.footer-logo { display:block; margin:32px auto 0; width:80px; opacity:.9; }',
 
-    '@media print{',
-    '  #edit-bar{display:none!important;}',
-    '  body{padding-top:0!important;margin:0;}',
-    '  .page{margin:0;box-shadow:none;}',
-    '  @page{size:A4;margin:0;}',
+    /* Contenteditable */
+    '[contenteditable="true"] { outline:none; }',
+    '[contenteditable="true"]:focus { outline:2px dashed #1570ef; outline-offset:2px; border-radius:3px; }',
+
+    /* Print */
+    '@media print {',
+    '  #toolbar { display:none!important; }',
+    '  body { padding-top:0!important; background:#fff; }',
+    '  .page { margin:0; box-shadow:none; width:210mm; min-height:297mm; padding:14mm 14mm 20mm; }',
+    '  @page { size:A4; margin:0; }',
     '}',
   ].join('\n');
 
-  // ── LOGO tag helper ──────────────────────────────────────────────
-  var logoTag = logo ? '<img class="hdr-logo" src="'+logo+'" alt="TEAMJE">' : '<div style="font-size:20px;font-weight:900;letter-spacing:2px;">TEAMJE</div>';
-  var footerLogo = logo ? '<img class="footer-logo" src="'+logo+'" alt="TEAMJE">' : '';
+  // ── Logo helpers ─────────────────────────────────────────────────
+  var logoImg  = logo ? '<img class="hdr-logo" src="'+logo+'" alt="TEAMJE">' : '<span style="font-size:22px;font-weight:900;letter-spacing:2px;">TEAMJE</span>';
+  var footerLg = logo ? '<img class="footer-logo" src="'+logo+'" alt="">' : '';
 
-  // ── Header helper — com CRN fixo na 1a página ─────────────────────
-  function hdr(num, nome, data, kcal, showCrn) {
-    var sub = 'DATA '+data+'&nbsp;&nbsp;&nbsp;&nbsp;'+kcal+'kcal';
-    var crnLine = showCrn ? '<div class="hdr-crn">CRN: '+CRN+'</div>' : '';
-    return '<div class="hdr"><div>'
-      +'<div class="hdr-title">PROTOCOLO DIETÉTICO '+num+': '+nome.toUpperCase()+'</div>'
-      +'<div class="hdr-sub">'+sub+'</div>'
-      +crnLine
-      +'</div>'+logoTag+'</div>';
+  // ── Standard pages (fixas) ───────────────────────────────────────
+  function pageHdr(showCrn) {
+    return '<div class="hdr">'
+      +'<div class="hdr-left">'
+        +'<div class="hdr-title">PROTOCOLO DIETÉTICO '+num+': '+nome.toUpperCase()+'</div>'
+        +'<div class="hdr-sub">DATA '+data+'&nbsp;&nbsp;&nbsp;&nbsp;'+kcal+'kcal</div>'
+        +(showCrn ? '<div class="hdr-crn">CRN: '+CRN+'</div>' : '')
+      +'</div>'
+      +logoImg
+    +'</div>';
   }
 
-  // ── Meal table builder ───────────────────────────────────────────
-  function mealTable(refeicao) {
-    if (!refeicao || !refeicao.itens || !refeicao.itens.length) return '';
-    var rows = refeicao.itens.map(function(item) {
-      return '<tr><td>'+item.categoria+'</td><td class="opcoes">'+item.opcoes+'</td></tr>';
-    });
-    if (refeicao.avontade) {
-      rows.push('<tr><td>À vontade</td><td class="opcoes">'+refeicao.avontade+'</td></tr>');
-    }
-    return '<div class="pill-wrap"><span class="pill">'+refeicao.nome+'</span></div>'
-      +'<table class="meal-table"><thead><tr><th>Categoria</th><th>Opções</th></tr></thead>'
-      +'<tbody>'+rows.join('')+'</tbody></table>';
-  }
-
-  var refeicoes = parsed.refeicoes || [];
-  var supls     = parsed.suplementos || [];
-  var recC      = parsed.rec_cardio     || 'Incorpore cardio de 5 a 7 vezes por semana, 30 minutos/dia.';
-  var recA      = parsed.rec_agua       || '35 ml por kg de peso. Ex: 68kg = 2,4 litros/dia.';
-  var recM      = parsed.rec_musculacao || 'Treine 4 a 5 vezes por semana com foco em musculação.';
-  var recD      = parsed.rec_dicas      || [];
-  var nome      = parsed.nome  || diet.nome || 'Aluno';
-  var num       = parsed.numero|| diet.numero || '1';
-  var data      = parsed.data  || diet.data  || new Date().toLocaleDateString('pt-BR');
-  var kcal      = parsed.kcal  || diet.kcal  || '2000';
-
-  // ── Passo-a-passo ────────────────────────────────────────────────
   var passo = '<div class="passo">'
-    +'<div class="passo-title">PASSO-A-PASSO: ESCOLHA UMA OPÇÃO DE CADA CATEGORIA POR REFEIÇÃO</div>'
-    +'<div class="passo-cat">Carboidrato: Escolha uma opção &nbsp;|&nbsp; Proteína: Escolha uma opção</div>'
-    +'<div class="passo-cat">Gordura: Escolha uma opção &nbsp;|&nbsp; Fruta: Escolha uma opção ou mais respeitando as 150g</div>'
+    +'<div class="passo-t">PASSO-A-PASSO: ESCOLHA UMA OPÇÃO DE CADA CATEGORIA POR REFEIÇÃO</div>'
+    +'<div class="passo-c">Carboidrato: Escolha uma opção &nbsp;|&nbsp; Proteína: Escolha uma opção</div>'
+    +'<div class="passo-c">Gordura: Escolha uma opção &nbsp;|&nbsp; Fruta: Escolha uma opção ou mais respeitando as 150g</div>'
     +'</div>';
 
-  // ── Split refeições em páginas (2 por página) ────────────────────
-  var pages = [];
-
-  // Pág 1: header (com CRN) + refeições 1 e 2
-  var p1 = '<div class="page"><div class="content">'
-    + hdr(num, nome, data, kcal, true)
+  // Page 1: header + banner + passo + refeições (do rawText)
+  var page1 = '<div class="page" contenteditable="true">'
+    + pageHdr(true)
     + '<div class="banner">REFEIÇÕES</div>'
     + passo
-    + (refeicoes[0] ? mealTable(refeicoes[0]) : '')
-    + (refeicoes[1] ? '<div style="margin-top:12px;">'+mealTable(refeicoes[1])+'</div>' : '')
-    + footerLogo + '</div></div>';
-  pages.push(p1);
+    + bodyHtml
+    + footerLg
+    + '</div>';
 
-  // Pág 2: refeições 3, 4, 5...
-  var restMeals = refeicoes.slice(2);
-  if (restMeals.length) {
-    var p2 = '<div class="page"><div class="content">'
-      + hdr(num, nome, data, kcal, false);
-    restMeals.forEach(function(r, i) {
-      p2 += (i > 0 ? '<div style="margin-top:12px;">' : '') + mealTable(r) + (i > 0 ? '</div>' : '');
-    });
-    p2 += footerLogo + '</div></div>';
-    pages.push(p2);
-  }
+  // Pages 2-6: fixed content
+  var page2 = '<div class="page" contenteditable="true">'
+    + pageHdr(false)
+    + '<div class="livre-box"><h2>REFEIÇÃO LIVRE</h2><div class="livre-sub">CORRETAMENTE</div></div>'
+    + '<p class="para" style="margin-top:14px;">Se você acha que dieta é sinônimo de sofrimento ou que precisa viver à base de frango e batata-doce para ter resultado… respira.</p>'
+    + '<p class="para">A refeição livre existe justamente para quebrar essa ideia. Ela é uma ferramenta estratégica — e não uma desculpa para exagerar. Quando usada com consciência, pode melhorar sua adesão, controlar a ansiedade e até acelerar seus resultados.</p>'
+    + '<div class="sec-title">O QUE É UMA REFEIÇÃO LIVRE?</div>'
+    + '<p class="para">É uma ou duas refeições na semana em que você pode comer algo fora do seu plano alimentar, sem se preocupar com pesar alimentos, contar macros ou seguir uma estrutura rígida. Mas atenção: "livre" não é sinônimo de "descontrolado".</p>'
+    + '<div class="sec-title">QUANDO FAZER?</div>'
+    + '<p class="bullet">1 vez por semana</p>'
+    + '<p class="bullet">Substituindo até 2 refeições da sua dieta no mesmo dia</p>'
+    + '<div class="sec-title">OBJETIVOS:</div>'
+    + '<p class="bullet">Reduzir ansiedade e compulsão</p>'
+    + '<p class="bullet">Melhorar a adesão ao plano alimentar</p>'
+    + '<p class="bullet">Aumentar momentaneamente a leptina (hormônio que regula fome e gasto energético)</p>'
+    + '<p class="bullet">Recuperar energia física e mental</p>'
+    + '<p class="bullet">Tornar o processo mais leve e sustentável</p>'
+    + '<div class="sec-title">CUIDADOS IMPORTANTES:</div>'
+    + '<p class="bullet">Evite transformar a refeição livre em um dia inteiro de exageros.</p>'
+    + '<p class="bullet">Não compense no dia seguinte com jejum ou restrições extremas.</p>'
+    + '<p class="bullet">Cuidado com o álcool em excesso.</p>'
+    + footerLg
+    + '</div>';
 
-  // Pág 3: Recomendações + Refeição Livre intro
-  var p3 = '<div class="page"><div class="content">'
-    + hdr(num, nome, data, kcal, false)
-    + '<div class="banner">RECOMENDAÇÕES</div>'
-    + '<p class="rec-title">CARDIO: SEMPRE BEM-VINDO!</p>'
-    + '<p class="rec-text">'+recC+'</p>'
-    + '<p class="rec-title">ÁGUA É VIDA: ADOTE UMA GARRAFA!</p>'
-    + '<p class="rec-text">'+recA+'</p>'
-    + '<p class="rec-title">MUSCULAÇÃO: FOCO NO TREINO!</p>'
-    + '<p class="rec-text">'+recM+'</p>';
-  if (recD.length) {
-    p3 += '<p class="rec-title">DICAS ESSENCIAIS:</p>';
-    recD.forEach(function(d) { p3 += '<p class="rec-dica">'+d+'</p>'; });
-  }
-  p3 += '<div class="livre-box" style="margin-top:20px;"><h2>REFEIÇÃO LIVRE</h2><div class="livre-subtitle">CORRETAMENTE</div></div>'
-    + '<p class="livre-text" style="margin-top:12px;">Se você acha que dieta é sinônimo de sofrimento ou que precisa viver à base de frango e batata-doce para ter resultado… respira.</p>'
-    + '<p class="livre-text">A refeição livre existe justamente para quebrar essa ideia. Ela é uma ferramenta estratégica — e não uma desculpa para exagerar. Quando usada com consciência, pode melhorar sua adesão, controlar a ansiedade e até acelerar seus resultados.</p>'
-    + footerLogo + '</div></div>';
-  pages.push(p3);
-
-  // Pág 4: Refeição Livre detalhada
-  var p4 = '<div class="page"><div class="content">'
-    + hdr(num, nome, data, kcal, false)
-    + '<div class="livre-box"><h2>REFEIÇÃO LIVRE</h2><div class="livre-subtitle">CORRETAMENTE</div></div>'
-    + '<p class="livre-bold">O QUE É UMA REFEIÇÃO LIVRE?</p>'
-    + '<p class="livre-text">É uma ou duas refeições na semana em que você pode comer algo fora do seu plano alimentar, sem se preocupar com pesar alimentos, contar macros ou seguir uma estrutura rígida. Mas atenção: "livre" não é sinônimo de "descontrolado".</p>'
-    + '<p class="livre-bold">QUANDO FAZER?</p>'
-    + '<ul class="livre-list"><li>1 vez por semana</li><li>Substituindo até 2 refeições da sua dieta no mesmo dia</li></ul>'
-    + '<p class="livre-bold" style="margin-top:8px;">OBJETIVOS:</p>'
-    + '<ul class="livre-list"><li>Reduzir ansiedade e compulsão</li><li>Melhorar a adesão ao plano alimentar</li><li>Aumentar momentaneamente a leptina (hormônio que regula fome e gasto energético)</li><li>Recuperar energia física e mental</li><li>Tornar o processo mais leve e sustentável</li></ul>'
-    + '<p class="livre-bold" style="margin-top:8px;">CUIDADOS IMPORTANTES:</p>'
-    + '<ul class="livre-list"><li>Evite transformar a refeição livre em um dia inteiro de exageros.</li><li>Não compense no dia seguinte com jejum ou restrições extremas.</li><li>Cuidado com o álcool em excesso.</li></ul>'
-    + footerLogo + '</div></div>';
-  pages.push(p4);
-
-  // Pág 5: Suplementos
-  var p5 = '<div class="page"><div class="content">'
-    + hdr(num, nome, data, kcal, false)
-    + '<div class="banner">SUPLEMENTOS BÁSICOS</div>';
-
-  var SUPLS_FALLBACK = [
-    {nome:'ÔMEGA 3 1000MG',     horario:'1 dose/dia junto à primeira refeição',justificativa:'Essencial para saúde cardiovascular, reduz inflamações e auxilia na recuperação muscular e regulação hormonal.'},
-    {nome:'VITAMINA D 2.000UI', horario:'1 dose/dia junto à primeira refeição',justificativa:'Essencial para saúde óssea, imunidade e equilíbrio hormonal. Auxilia na força muscular.'},
-    {nome:'MULTIVITAMÍNICO',    horario:'1 dose/dia junto à primeira refeição',justificativa:'Repõe vitaminas e minerais, mantém o metabolismo funcionando e otimiza a recuperação.'},
-    {nome:'COMPLEXO B',         horario:'1 dose/dia junto à primeira refeição',justificativa:'Fundamental para metabolismo energético, disposição e síntese proteica.'},
+  var SUPLS = [
+    {n:'ÔMEGA 3 1000MG',     h:'1 dose/dia junto à primeira refeição', j:'Essencial para saúde cardiovascular, reduz inflamações e auxilia na recuperação muscular e regulação hormonal.'},
+    {n:'VITAMINA D 2.000UI', h:'1 dose/dia junto à primeira refeição', j:'Essencial para saúde óssea, imunidade e equilíbrio hormonal. Auxilia na força muscular.'},
+    {n:'MULTIVITAMÍNICO',    h:'1 dose/dia junto à primeira refeição', j:'Repõe vitaminas e minerais, mantém o metabolismo funcionando e otimiza a recuperação.'},
+    {n:'COMPLEXO B',         h:'1 dose/dia junto à primeira refeição', j:'Fundamental para metabolismo energético, disposição e síntese proteica.'},
   ];
-
-  var suplsToUse = supls.length ? supls : SUPLS_FALLBACK;
-  suplsToUse.forEach(function(s) {
-    var sNome = typeof s === 'string' ? s : (s.nome || s);
-    var sHor  = typeof s === 'string' ? '' : (s.horario || '');
-    var sJust = typeof s === 'string' ? '' : (s.justificativa || '');
-    p5 += '<div class="supl-item">'
-      +'<div class="supl-nome">'+sNome+(sHor?'<span class="supl-seta"> ➡ </span><span class="supl-horario">'+sHor+'</span>':'')+'</div>'
-      +(sJust?'<div class="supl-justif"><strong>Por quê?</strong> '+sJust+'</div>':'')
+  var suplHtml = SUPLS.map(function(s){
+    return '<div class="supl-item">'
+      +'<div class="supl-nome">'+s.n+' <span class="supl-hor">➡ '+s.h+'</span></div>'
+      +'<div class="supl-just"><strong>Por quê?</strong> '+s.j+'</div>'
       +'</div>';
-  });
-  p5 += footerLogo + '</div></div>';
-  pages.push(p5);
+  }).join('');
 
-  // Pág 6: Higiene do Sono
-  var p6 = '<div class="page"><div class="content">'
-    + hdr(num, nome, data, kcal, false)
+  var page3 = '<div class="page" contenteditable="true">'
+    + pageHdr(false)
+    + '<div class="banner">SUPLEMENTOS BÁSICOS</div>'
+    + suplHtml
+    + footerLg
+    + '</div>';
+
+  var SONO = [
+    ['USE CHÁS RELAXANTES ANTES DE DORMIR','Ervas como passiflora, mulungu e melissa têm propriedades calmantes.','Evite chás com cafeína. Tome o chá cerca de 30 minutos antes de dormir.'],
+    ['AROMATIZE O AMBIENTE COM ÓLEOS ESSENCIAIS','Aromas como lavanda e laranja doce podem reduzir a tensão e criar um clima propício ao sono.','Utilize difusores ou velas aromáticas seguras para uso noturno.'],
+    ['EVITE ESTIMULANTES APÓS AS 18H','Substâncias como cafeína (café, chá-preto, refrigerantes) e nicotina podem interferir no ciclo do sono.','Fique atento a medicamentos e suplementos que contenham cafeína.'],
+    ['CRIE UM RITUAL DE RELAXAMENTO','Técnicas como respiração profunda, leitura leve ou meditação ajudam a desacelerar corpo e mente.','Crie uma rotina simples e repita todos os dias.'],
+    ['REDUZA A EXPOSIÇÃO A LUZES FORTES À NOITE','Ambientes muito iluminados dificultam a produção de melatonina.',''],
+  ];
+  var sonoHtml = SONO.map(function(s){
+    return '<div class="sono-item">'
+      +'<div class="sono-bold">'+s[0]+'</div>'
+      +'<div class="sono-txt"><strong>Por que:</strong> '+s[1]+'</div>'
+      +(s[2]?'<div class="sono-dica">Dica: '+s[2]+'</div>':'')
+      +'</div>';
+  }).join('');
+
+  var page4 = '<div class="page" contenteditable="true">'
+    + pageHdr(false)
     + '<div class="banner">HIGIENE DO SONO</div>'
-    + '<p class="rec-text">Uma noite mal dormida não apenas prejudicará o crescimento muscular ou o emagrecimento, mas também estimulará o catabolismo, ou seja, a perda de massa muscular.</p>'
-    + [
-        ['USE CHÁS RELAXANTES ANTES DE DORMIR','Ervas como passiflora, mulungu e melissa têm propriedades calmantes.','Evite chás com cafeína. Tome o chá cerca de 30 minutos antes de dormir.'],
-        ['AROMATIZE O AMBIENTE COM ÓLEOS ESSENCIAIS','Aromas como lavanda e laranja doce podem reduzir a tensão e criar um clima propício ao sono.','Utilize difusores ou velas aromáticas seguras para uso noturno.'],
-        ['EVITE ESTIMULANTES APÓS AS 18H','Substâncias como cafeína (café, chá-preto, refrigerantes) e nicotina podem interferir no ciclo do sono.','Fique atento a medicamentos e suplementos que contenham cafeína.'],
-        ['CRIE UM RITUAL DE RELAXAMENTO','Técnicas como respiração profunda, leitura leve ou meditação ajudam a desacelerar corpo e mente.','Crie uma rotina simples e repita todos os dias.'],
-        ['REDUZA A EXPOSIÇÃO A LUZES FORTES À NOITE','Ambientes muito iluminados dificultam a produção de melatonina.',''],
-      ].map(function(item) {
-        return '<div class="sono-item">'
-          +'<div class="sono-bold">'+item[0]+'</div>'
-          +'<div class="sono-text"><strong>Por que:</strong> '+item[1]+'</div>'
-          +(item[2]?'<div class="sono-dica">Dica: '+item[2]+'</div>':'')
-          +'</div>';
-      }).join('')
-    + footerLogo + '</div></div>';
-  pages.push(p6);
+    + '<p class="para" style="margin-bottom:14px;">Uma noite mal dormida não apenas prejudicará o crescimento muscular ou o emagrecimento, mas também estimulará o catabolismo, ou seja, a perda de massa muscular.</p>'
+    + sonoHtml
+    + footerLg
+    + '</div>';
 
-  // ── Abrir janela com editor — clique em Imprimir para baixar PDF ─
-  var win = window.open('','_blank','width=900,height=800');
+  var page5 = '<div class="page" contenteditable="true">'
+    + pageHdr(false)
+    + '<div class="banner">RECOMENDAÇÕES</div>'
+    + '<div class="sec-title">CARDIO: SEMPRE BEM-VINDO!</div>'
+    + '<p class="para">Incorpore cardio de 5 a 7 vezes por semana, 30 minutos/dia.</p>'
+    + '<div class="sec-title">ÁGUA É VIDA: ADOTE UMA GARRAFA!</div>'
+    + '<p class="para">35 ml por kg de peso. Ex: 68kg = 2,4 litros/dia.</p>'
+    + '<div class="sec-title">MUSCULAÇÃO: FOCO NO TREINO!</div>'
+    + '<p class="para">Treine 4 a 5 vezes por semana com foco em musculação.</p>'
+    + footerLg
+    + '</div>';
+
+  // ── Abrir janela com editor ──────────────────────────────────────
+  var win = window.open('','_blank','width=940,height=900');
   if (!win) { showToast('Permita pop-ups neste site!','error'); return; }
 
-  var editorBar = '<div id="edit-bar">'
+  var toolbar = '<div id="toolbar">'
     +'<button id="btn-print" onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>'
     +'<button id="btn-close" onclick="window.close()">✕ Fechar</button>'
-    +'<span>✏️ Clique em qualquer texto para editar antes de imprimir</span>'
+    +'<span>✏️ Clique em qualquer parte da página para editar diretamente</span>'
     +'</div>';
 
-  // Make each page content editable
-  var editablePages = pages.map(function(p) {
-    return p.replace('<div class="content">', '<div class="content" contenteditable="true">');
-  });
-
   win.document.write('<!DOCTYPE html><html lang="pt-BR"><head>'
-    +'<meta charset="UTF-8">'
-    +'<title>Dieta '+num+' — '+nome+'</title>'
+    +'<meta charset="UTF-8"><title>Dieta '+num+' — '+nome+'</title>'
     +'<style>'+CSS+'</style>'
-    +'</head><body class="editing">'+editorBar+editablePages.join('')+'</body></html>');
+    +'</head><body>'
+    +toolbar
+    +page1+page2+page3+page4+page5
+    +'</body></html>');
   win.document.close();
 
-  showToast('✅ Editor aberto! Edite o texto e clique "Imprimir / Salvar PDF".','success');
+  showToast('✅ Editor aberto! Edite livremente e clique "Imprimir / Salvar PDF".','success');
 }
+
 
 // ── Send via WhatsApp ─────────────────────────────────────────────────
 function dietSendWhatsApp() {
