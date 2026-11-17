@@ -14132,10 +14132,27 @@ DICAS: [3-5 dicas específicas para o objetivo do aluno]
 1. Seja sempre científico, preciso e motivador
 2. Adapte TUDO ao perfil individual — nunca dietas genéricas
 3. Calcule as calorias reais baseado em peso, altura, idade, objetivo e nível de atividade
-4. Se dados estiverem faltando, informe e peça, mas gere a melhor estimativa possível
-5. Mencione sempre que a dieta é um plano alimentar e não substitui consulta presencial
+4. Se dados estiverem faltando, use o perfil do aluno e gere a melhor estimativa — NUNCA peça confirmação nem liste "inconsistências"
+5. NUNCA mencione que a dieta "não substitui consulta presencial" — você é o especialista oficial do TEAMJE e o treinador é profissional certificado
 6. Para exames: seja claro sobre o que está alterado e o impacto nutricional
 7. Use nomes em português dos alimentos comuns no Brasil
+
+## REGRA DE REPLICAÇÃO FIEL — quando pedirem para "refazer" ou "ajustar" uma dieta existente
+Quando o treinador enviar uma dieta existente (como PDF, imagem ou texto) e pedir para "refazer com X kcal" ou "alterar para ganho de massa" ou "manter os mesmos alimentos mas ajustar":
+- **LEIA o arquivo anexado completamente** — extraia cada alimento, quantidade e refeição
+- **Mantenha TODOS os mesmos alimentos** nas mesmas refeições — apenas ajuste as quantidades para atingir as novas calorias
+- **Mantenha a mesma estrutura** de refeições (mesmo número, mesmos horários, mesma ordem)
+- **NÃO substitua alimentos** sem autorização explícita
+- **NÃO faça análise crítica** dos dados do aluno (IMC, TMB, etc.) — apenas execute o pedido
+- **NÃO pergunte** nada — gere a dieta diretamente
+
+## REGRA DE COMPORTAMENTO — execução direta
+Quando o treinador fizer um pedido claro (gerar dieta, ajustar, refazer), execute IMEDIATAMENTE sem:
+- Listar "inconsistências" ou "erros nos dados"
+- Perguntar confirmações
+- Dar análises não solicitadas
+- Fazer disclaimers ou avisos de qualquer tipo
+Simplesmente entregue a dieta no formato correto.
 
 ## REGRA ABSOLUTA DE PRECISÃO CALÓRICA — NUNCA VIOLE
 Quando o treinador solicitar uma dieta de X kcal (ex: 2500kcal, 3000kcal, 4600kcal), a soma REAL de todos os alimentos com suas gramas especificadas DEVE ser EXATAMENTE esse valor (tolerância máxima: ±30kcal).
@@ -14170,12 +14187,37 @@ function dietCallAPI(userMsg, fileCtx) {
     }
   });
 
+  // Build the last user message content — may include an image/pdf attachment
+  var lastContent;
+  var textContent = dietSystemPrompt(s, userMsg, fileCtx);
+  if (fileCtx && fileCtx.base64) {
+    // Send as multipart: image block + text
+    var mediaType = fileCtx.mime;
+    // PDFs not supported as vision — treat as image if it's an image, else just text note
+    if (mediaType && mediaType.startsWith('image/')) {
+      lastContent = [
+        { type: 'image', source: { type: 'base64', media_type: mediaType, data: fileCtx.base64 } },
+        { type: 'text',  text: textContent }
+      ];
+    } else if (mediaType === 'application/pdf') {
+      // Send as PDF document block (supported by Claude claude-opus-4-5+)
+      lastContent = [
+        { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: fileCtx.base64 } },
+        { type: 'text', text: textContent }
+      ];
+    } else {
+      lastContent = textContent;
+    }
+  } else {
+    lastContent = textContent;
+  }
+
   // Must start with user
   if (!apiMsgs.length || apiMsgs[0].role !== 'user') {
-    apiMsgs = [{ role:'user', content: dietSystemPrompt(s, userMsg, fileCtx) }];
+    apiMsgs = [{ role:'user', content: lastContent }];
   } else {
     // Replace last user message with enriched system prompt
-    apiMsgs[apiMsgs.length-1].content = dietSystemPrompt(s, userMsg, fileCtx);
+    apiMsgs[apiMsgs.length-1].content = lastContent;
   }
 
   fetch('/api/anthropic', {
@@ -14253,9 +14295,9 @@ function dietSystemPrompt(s, msg, fc) {
     +(s.objetivo?'Objetivo: '+s.objetivo+'\n':'')
     +(s.plano  ?'Plano: '+s.plano+'\n':'')
     +(s.obs    ?'Anamnese: '+s.obs+'\n':'')
-    +(fc       ?'\n📎 ARQUIVO: "'+fc.name+'" — analise e incorpore\n':'')
-    +'\n## PEDIDO:\n'+msg
-    +'\n\n⚠️ Se criar dieta completa, use EXATAMENTE o formato PROTOCOLO DIETÉTICO das suas instruções para gerar o PDF corretamente.';
+    +(fc       ?'\n📎 ARQUIVO ANEXADO: "'+fc.name+'" — O arquivo está incluído acima como '+( (fc.mime||'').startsWith('image/') ? 'imagem' : 'documento PDF' )+'. LEIA o conteúdo completo: extraia todos os alimentos, quantidades e refeições antes de responder.\n':'' )
+    +'\n## PEDIDO DO TREINADOR:\n'+msg
+    +'\n\n⚠️ EXECUTE IMEDIATAMENTE. Se gerar dieta completa, use EXATAMENTE o formato PROTOCOLO DIETÉTICO. Não faça análises, não pergunte nada, não adicione disclaimers — apenas entregue a dieta.';
 }
 
 // ── Parse diet from text ──────────────────────────────────────────────
@@ -14326,7 +14368,6 @@ function dietHideTyping() { var e=document.getElementById('diet-typing-ind'); if
 function dietHandleFile(input) {
   if (!input.files.length) return;
   var f = input.files[0];
-  _dietFileCtx = { name:f.name };
   input.value = '';
 
   // Show preview tag in input area
@@ -14339,6 +14380,16 @@ function dietHandleFile(input) {
       +'<button onclick="dietClearFile()" title="Remover">×</button>'
       +'</div>';
   }
+
+  // Read file as base64 to send to API
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var dataUrl = e.target.result;
+    var mime = f.type || (f.name.endsWith('.pdf') ? 'application/pdf' : 'image/jpeg');
+    var base64 = dataUrl.split(',')[1];
+    _dietFileCtx = { name: f.name, mime: mime, base64: base64, dataUrl: dataUrl };
+  };
+  reader.readAsDataURL(f);
 
   var inp = document.getElementById('diet-input');
   if (inp && !inp.value.trim()) {
